@@ -507,6 +507,13 @@ export default function ChatPage() {
                         <Trash2 size={16} />
                         <span>{t.logoutBtn}</span>
                     </button>
+
+                    <div className="pt-3 mt-1 border-t dark:border-gray-800 flex flex-col items-center gap-1">
+                        <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest opacity-60">POWERED BY</span>
+                        <a href="https://pollinations.ai" target="_blank" rel="noopener noreferrer" className="opacity-70 hover:opacity-100 transition-opacity">
+                            <img src="https://raw.githubusercontent.com/pollinations/pollinations/main/assets/logo.svg" alt="Pollinations" className="h-8 invert dark:invert-0" />
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -776,7 +783,9 @@ export default function ChatPage() {
                             </div>
                         </div>
                         <div className="text-center mt-4">
-                            <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest opacity-60">AI Client with Polli • Pollinations API</span>
+                            <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest opacity-60">
+                                AI Client with Polli • <a href="https://pollinations.ai" target="_blank" rel="noopener noreferrer" className="hover:text-claude-accent transition-colors">Powered by Pollinations.ai</a>
+                            </span>
                         </div>
                     </div>
                 </div>
