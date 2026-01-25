@@ -16,7 +16,7 @@
 
 <br/>
 
-A premium, privacy-focused interface **exclusively designed for the Pollinations.ai API**. Access **Claude Opus 4.5**, **DeepSeek V3.2**, and **GPT-5.2** for structural document analysis and technical reasoning without the subscription costs.
+A privacy-focused interface **exclusively designed for the Pollinations.ai API**. Access **Claude Opus 4.5**, **DeepSeek V3.2**, and **GPT-5.2** for structural document analysis and technical reasoning without the subscription costs.
 
 ## Technical Specifications
 
