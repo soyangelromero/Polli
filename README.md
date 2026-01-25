@@ -18,15 +18,6 @@
 
 A privacy-focused interface **exclusively designed for the Pollinations.ai API**. Access **Claude Opus 4.5**, **DeepSeek V3.2**, and **GPT-5.2** for structural document analysis and technical reasoning without the subscription costs.
 
-## Technical Specifications
-
-- **Framework**: Next.js 16 (App Router)
-- **UI Architecture**: React 19, Tailwind CSS, Framer Motion
-- **Inference Layer**: Pollinations API (OpenAI-compatible)
-- **Document Processing**: PDF text extraction and vision-based analysis
-
-## Key Functionalities
-
 - **Model Orchestration**: Integrated support for Claude Opus 4.5, DeepSeek V3.2, and GPT-5.2.
 - **Internationalization (i18n)**: Default English interface with on-the-fly Spanish toggle.
 - **Structural Analysis**: Specialized system prompts (Skills) for technical and formal document interpretation.
@@ -62,13 +53,6 @@ A privacy-focused interface **exclusively designed for the Pollinations.ai API**
 
 4. Access the application:
    The server will be available at [http://localhost:3000](http://localhost:3000).
-
-## System Architecture
-
-- `app/`: Contains the core application router and API endpoints (`/api/chat`, `/api/balance`).
-- `skills/`: Markdown-based system prompt modules for behavior specialization.
-- `components/`: Modular UI elements and layout primitives.
-- `lib/`: Shared utility functions and configuration constants.
 
 ## Privacy and Data Handling
 
