@@ -113,7 +113,7 @@ export default function ChatPage() {
     const [tempKey, setTempKey] = useState("");
     const abortControllerRef = useRef<AbortController | null>(null);
 
-    // Initial API Key & Language check
+    // Initial Config Load & Balance Check
     useEffect(() => {
         const savedKey = localStorage.getItem("pollinations_api_key");
         const savedLang = localStorage.getItem("app_language") as "en" | "es";
@@ -124,35 +124,13 @@ export default function ChatPage() {
             setShowApiKeyModal(true);
         }
 
-        if (savedLang) {
-            setLanguage(savedLang);
-        }
-    }, []);
-    // Load chats from Server on mount
-    useEffect(() => {
-        if (!userApiKey) return;
-
-        const fetchChats = async () => {
-            try {
-                const response = await fetch("/api/chat", {
-                    headers: { "x-api-key": userApiKey }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    setChats(data);
-                    if (data.length > 0) {
-                        setCurrentChatId(data[0].id);
-                    }
-                }
-            } catch (error) {
-                console.error("Error fetching chats from server:", error);
-            }
-        };
+        if (savedLang) setLanguage(savedLang);
 
         const fetchBalance = async () => {
+            if (!savedKey) return;
             try {
                 const res = await fetch("/api/balance", {
-                    headers: { "x-api-key": userApiKey }
+                    headers: { "x-api-key": savedKey }
                 });
                 if (res.ok) {
                     const data = await res.json();
@@ -163,9 +141,27 @@ export default function ChatPage() {
             }
         };
 
-        fetchChats();
         fetchBalance();
-    }, [userApiKey]);
+
+        // Load chats from LocalStorage
+        const savedChats = localStorage.getItem("polli_chats");
+        if (savedChats) {
+            try {
+                const parsed = JSON.parse(savedChats);
+                setChats(parsed);
+                if (parsed.length > 0) {
+                    setCurrentChatId(parsed[0].id);
+                }
+            } catch (e) { console.error("Failed to parse chats", e); }
+        }
+    }, []);
+
+    // Save chats to LocalStorage listener
+    useEffect(() => {
+        if (chats.length >= 0) { // Always save, even if empty
+            localStorage.setItem("polli_chats", JSON.stringify(chats));
+        }
+    }, [chats]);
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -212,24 +208,12 @@ export default function ChatPage() {
         e.stopPropagation();
         if (!confirm(t.deleteConfirm)) return;
 
-        try {
-            await fetch("/api/chat", {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-api-key": userApiKey || ""
-                },
-                body: JSON.stringify({ chatId: id })
-            });
-
-            const updated = chats.filter(c => c.id !== id);
-            setChats(updated);
-            if (currentChatId === id) {
-                setCurrentChatId(updated.length > 0 ? updated[0].id : null);
-            }
-        } catch (error) {
-            console.error("Error deleting chat:", error);
+        const updated = chats.filter(c => c.id !== id);
+        setChats(updated);
+        if (currentChatId === id) {
+            setCurrentChatId(updated.length > 0 ? updated[0].id : null);
         }
+        // LocalStorage update handled by useEffect
     };
 
     const processFiles = (files: FileList | File[]) => {
@@ -523,6 +507,13 @@ export default function ChatPage() {
                         <Trash2 size={16} />
                         <span>{t.logoutBtn}</span>
                     </button>
+
+                    <div className="pt-3 mt-1 border-t dark:border-gray-800 flex flex-col items-center gap-1">
+                        <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest opacity-60">POWERED BY</span>
+                        <a href="https://pollinations.ai" target="_blank" rel="noopener noreferrer" className="opacity-70 hover:opacity-100 transition-opacity">
+                            <img src="https://raw.githubusercontent.com/pollinations/pollinations/main/assets/logo.svg" alt="Pollinations" className="h-8 invert dark:invert-0" />
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -792,7 +783,9 @@ export default function ChatPage() {
                             </div>
                         </div>
                         <div className="text-center mt-4">
-                            <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest opacity-60">AI Client with Polli • Pollinations API</span>
+                            <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest opacity-60">
+                                AI Client with Polli • <a href="https://pollinations.ai" target="_blank" rel="noopener noreferrer" className="hover:text-claude-accent transition-colors">Powered by Pollinations.ai</a>
+                            </span>
                         </div>
                     </div>
                 </div>
