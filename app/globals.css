@@ -136,3 +136,90 @@
 .markdown-content ol {
   list-style-type: decimal;
 }
+
+/* Tables */
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  /* Make sure borders collapse! */
+  margin-bottom: 1rem;
+  overflow-x: auto;
+  display: block;
+  /* Important for responsiveness */
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+}
+
+.markdown-content thead {
+  background-color: var(--muted);
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+.markdown-content th {
+  font-weight: 600;
+}
+
+.markdown-content tr:nth-child(even) {
+  background-color: var(--background);
+  /* Use background variable */
+}
+
+.markdown-content tr:hover {
+  background-color: var(--muted);
+}
+
+/* Headings */
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4 {
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  line-height: 1.3;
+}
+
+.markdown-content h1 {
+  font-size: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+
+.markdown-content h2 {
+  font-size: 1.25rem;
+}
+
+.markdown-content h3 {
+  font-size: 1.125rem;
+}
+
+/* Blockquotes */
+.markdown-content blockquote {
+  border-left: 4px solid var(--claude-accent);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: var(--muted-foreground);
+  background: var(--muted);
+  padding: 1rem;
+  /* More padding */
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+/* Links */
+.markdown-content a {
+  color: var(--claude-accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.markdown-content hr {
+  border-color: var(--border);
+  margin: 2rem 0;
+}
