@@ -128,31 +128,56 @@ export default function ChatPage() {
             setLanguage(savedLang);
         }
     }, []);
-    // Load chats from Server on mount
+    // Load chats from LocalStorage on mount
     useEffect(() => {
-        if (!userApiKey) return;
-
-        const fetchChats = async () => {
+        const savedChats = localStorage.getItem("polli_chats");
+        if (savedChats) {
             try {
-                const response = await fetch("/api/chat", {
-                    headers: { "x-api-key": userApiKey }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    setChats(data);
-                    if (data.length > 0) {
-                        setCurrentChatId(data[0].id);
-                    }
+                const parsed = JSON.parse(savedChats);
+                setChats(parsed);
+                if (parsed.length > 0 && !currentChatId) {
+                    // Only set if not already set (though usually null on mount)
+                    // Logic handled in checking userApiKey usually, but here fine.
                 }
-            } catch (error) {
-                console.error("Error fetching chats from server:", error);
+            } catch (e) {
+                console.error("Failed to parse chats", e);
             }
-        };
+        }
+    }, []);
+
+    // Save chats to LocalStorage whenever they change
+    useEffect(() => {
+        if (chats.length > 0) {
+            localStorage.setItem("polli_chats", JSON.stringify(chats));
+        } else {
+            // Optional: clear if empty? Or just keep empty array.
+            // localStorage.setItem("polli_chats", JSON.stringify([])); 
+            // Better to keep it to avoid clutter if user clears everything? 
+            // Actually, if we delete all, we should save empty array.
+            localStorage.setItem("polli_chats", JSON.stringify(chats));
+        }
+    }, [chats]);
+
+    // Initial API Key & Language check and Balance
+    useEffect(() => {
+        const savedKey = localStorage.getItem("pollinations_api_key");
+        const savedLang = localStorage.getItem("app_language") as "en" | "es";
+
+        if (savedKey) {
+            setUserApiKey(savedKey);
+        } else {
+            setShowApiKeyModal(true);
+        }
+
+        if (savedLang) {
+            setLanguage(savedLang);
+        }
 
         const fetchBalance = async () => {
+            if (!savedKey) return;
             try {
                 const res = await fetch("/api/balance", {
-                    headers: { "x-api-key": userApiKey }
+                    headers: { "x-api-key": savedKey }
                 });
                 if (res.ok) {
                     const data = await res.json();
@@ -163,9 +188,8 @@ export default function ChatPage() {
             }
         };
 
-        fetchChats();
         fetchBalance();
-    }, [userApiKey]);
+    }, []);
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -212,24 +236,12 @@ export default function ChatPage() {
         e.stopPropagation();
         if (!confirm(t.deleteConfirm)) return;
 
-        try {
-            await fetch("/api/chat", {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-api-key": userApiKey || ""
-                },
-                body: JSON.stringify({ chatId: id })
-            });
-
-            const updated = chats.filter(c => c.id !== id);
-            setChats(updated);
-            if (currentChatId === id) {
-                setCurrentChatId(updated.length > 0 ? updated[0].id : null);
-            }
-        } catch (error) {
-            console.error("Error deleting chat:", error);
+        const updated = chats.filter(c => c.id !== id);
+        setChats(updated);
+        if (currentChatId === id) {
+            setCurrentChatId(updated.length > 0 ? updated[0].id : null);
         }
+        // LocalStorage update handled by useEffect
     };
 
     const processFiles = (files: FileList | File[]) => {
