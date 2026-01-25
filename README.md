@@ -1,58 +1,59 @@
-# AI Client with Polli 🚀🌍
+# AI Client with Polli
 
-Advanced Multi-Model AI Client designed for high-precision document analysis and versatile reasoning. Powered by the **Pollinations API**.
+A professional, multi-model AI interface designed for structural document analysis and technical reasoning. This client serves as a secure frontend for the Pollinations API, providing specialized tools for complex high-fidelity interpretation.
 
-## ✨ Features
+## Technical Specifications
 
-- **Multi-Model Support**: Switch instantly between **Claude Opus 4.5**, **DeepSeek V3.2**, and **ChatGPT 5.2**.
-- **Global Ready (i18n)**: Full support for **English** and **Spanish**.
-- **High-Precision Analysis**: Specialized "Skills" for structural and technical interpretation of PDFs and images.
-- **Privacy First**: No hardcoded API keys. Users provide their own Pollinations key, stored securely in their local browser.
-- **Smart History**: Persistent chat history with a built-in search engine.
-- **Beautiful UI**: Modern, responsive design with dark mode and smooth animations.
+- **Framework**: Next.js 16 (App Router)
+- **UI Architecture**: React 19, Tailwind CSS, Framer Motion
+- **Inference Layer**: Pollinations API (OpenAI-compatible)
+- **Document Processing**: PDF text extraction and vision-based analysis
 
-## 🛠️ Prerequisites & Installation
+## Key Functionalities
 
-### Prerequisites
+- **Model Orchestration**: Integrated support for Claude Opus 4.5, DeepSeek V3.2, and GPT-5.2.
+- **Internationalization (i18n)**: Default English interface with on-the-fly Spanish toggle.
+- **Structural Analysis**: Specialized system prompts (Skills) for technical and formal document interpretation.
+- **Security & Privacy**: Client-side API key management via X-API-Key headers; persistent local storage with no server-side credential persistence.
+- **Searchable History**: Indexed local chat history for rapid document and radicado retrieval.
 
-- **Node.js**: 18.17.0 or later (Node 20+ recommended).
-- **npm**: Standard with Node.js.
-- **Pollinations API Key**: Required for chat functionality.
+## Prerequisites
 
-### Installation
+- **Node.js**: Version 18.17.0 or higher (Node 20+ recommended).
+- **npm**: Standard installation.
+- **Pollinations Account**: Valid API Key from [pollinations.ai](https://pollinations.ai).
 
-1. **Clone the repository**:
+## Installation
+
+1. Clone the repository:
 
    ```bash
-   git clone <your-repository-url>
-   cd AI-Client-with-Polli
+   git clone <repository-url>
+   cd ai-client-polli
    ```
 
-2. **Install dependencies**:
+2. Install dependencies:
 
    ```bash
    npm install
    ```
 
-3. **Run the development server**:
+3. Initialize the development environment:
 
    ```bash
    npm run dev
    ```
 
-4. **Access the App**:
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
+4. Access the application:
+   The server will be available at [http://localhost:3000](http://localhost:3000).
 
-## 🔑 Configuration
+## System Architecture
 
-On the first run, the app will ask for your **Pollinations API Key**. You can get one at [pollinations.ai](https://pollinations.ai). ensure you have the required models enabled in your account.
+- `app/`: Contains the core application router and API endpoints (`/api/chat`, `/api/balance`).
+- `skills/`: Markdown-based system prompt modules for behavior specialization.
+- `components/`: Modular UI elements and layout primitives.
+- `lib/`: Shared utility functions and configuration constants.
 
-## 📁 Project Structure
+## Privacy and Data Handling
 
-- `app/`: Application logic and API routes.
-- `skills/`: System prompts for specialized AI behavior.
-- `components/`: Reusable UI components.
-- `public/`: Static assets and icons.
-
----
-Developed for professional document analysis and global accessibility.
+This application does not store user credentials on the server. All API keys and chat histories are handled locally in the browser environment. Sensitive files and local logs are excluded from source control via `.gitignore`.
