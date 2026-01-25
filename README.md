@@ -15,11 +15,6 @@
 </div>
 
 <br/>
-<<<<<<< HEAD
-
-A premium, privacy-focused interface **exclusively designed for the Pollinations.ai API**. Access **Claude Opus 4.5**, **DeepSeek V3.2**, and **GPT-5.2** for structural document analysis and technical reasoning without the subscription costs.
-=======
->>>>>>> 2c73f6c959998445cef934a8451c663de7d69494
 
 A privacy-focused interface **exclusively designed for the Pollinations.ai API**. Access **Claude Opus 4.5**, **DeepSeek V3.2**, and **GPT-5.2** for structural document analysis and technical reasoning without the subscription costs.
 
