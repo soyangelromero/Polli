@@ -1,5 +1,7 @@
 # AI Client with Polli
 
+![Vercel Compatible](https://img.shields.io/badge/Vercel-Compatible-black?style=flat-square&logo=vercel)
+
 A professional, multi-model AI interface designed for structural document analysis and technical reasoning. This client serves as a secure frontend for the Pollinations API, providing specialized tools for complex high-fidelity interpretation.
 
 ## Technical Specifications

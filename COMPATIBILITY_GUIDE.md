@@ -1,29 +1,25 @@
 # Vercel Free Tier Compatibility Update
 
-## Changes Implemented (Option 2: Local Storage)
+## Authentication (Mandatory User Key)
 
-The application has been updated to run successfully on Vercel's Free Tier by removing dependencies on the server-side file system for storing chats.
+The application is configured to require each user to provide their own Pollinations API Key.
 
-### 1. Frontend (`app/page.tsx`)
+1. **Backend (`app/api/chat` & `app/api/balance`)**: Strictly checks for `x-api-key` header. Returns `401 Unauthorized` if missing.
+2. **Frontend (`app/page.tsx`)**:
+    * On first visit, checks `localStorage` for a key.
+    * If missing, displays a **System Authentication** modal that cannot be dismissed until a key is entered.
+    * Stores the key locally in the browser for future sessions.
 
-* **Chat Hitory**: Now loads from and saves to the browser's `localStorage` (key: `polli_chats`).
-* **Persistence**: Chats persist across reloads on the same browser/device.
-* **API Calls**: Removed calls to `GET /api/chat` (load history) and `DELETE /api/chat` since the server no longer manages history.
+## Local Storage (Chat History)
 
-### 2. Backend (`app/api/chat/route.ts`)
+* **Chat History**: Stored in browser `localStorage`.
+* **Server**: Stateless proxy to Pollinations. No file system writes.
 
-* **Stateless**: The API now acts purely as a relay to Pollinations.ai.
-* **No filesystem writes**: Removed all `fs.writeFileSync`, `fs.mkdirSync`, and `fs.rmSync` calls related to chat history.
-* **Skills**: Access to the `skills` folder remains read-only. It handles missing folders gracefully.
+## Deployment
 
-### Notes for Vercel Deployment
+Simply `git push` or run `vercel deploy` again. The previous errors related to file systems or missing keys should be resolved.
 
-1. **Environment Variables**: Ensure you add your `POLLINATIONS_API_KEY` (if hardcoded) or allow the user to enter it in the UI (current behavior).
-2. **Timeouts**: Vercel Free Tier has a **10-second limit** for serverless function execution.
-    * If a model (like Claude Opus) takes longer than 10s to generate a full non-streamed response, the request might fail with a 504 Gateway Timeout.
-    * **Mitigation**: If this happens frequently, we may need to implement **Streaming** (sending chunks of text as they arrive) in a future update.
+### Troubleshooting
 
-### Verification
-
-* Current chats are stored in your browser.
-* The server endpoint `/api/chat` is now lightweight and compatible with serverless environments.
+* **Error 504 (Timeout)**: The Free Tier limit is 10s. If a request takes longer, it will fail. This is a platform limitation.
+* **API Key Error**: Ensure your users have a valid key from [pollinations.ai](https://pollinations.ai).

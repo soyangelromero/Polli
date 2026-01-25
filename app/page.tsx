@@ -113,7 +113,7 @@ export default function ChatPage() {
     const [tempKey, setTempKey] = useState("");
     const abortControllerRef = useRef<AbortController | null>(null);
 
-    // Initial API Key & Language check
+    // Initial Config Load & Balance Check
     useEffect(() => {
         const savedKey = localStorage.getItem("pollinations_api_key");
         const savedLang = localStorage.getItem("app_language") as "en" | "es";
@@ -124,54 +124,7 @@ export default function ChatPage() {
             setShowApiKeyModal(true);
         }
 
-        if (savedLang) {
-            setLanguage(savedLang);
-        }
-    }, []);
-    // Load chats from LocalStorage on mount
-    useEffect(() => {
-        const savedChats = localStorage.getItem("polli_chats");
-        if (savedChats) {
-            try {
-                const parsed = JSON.parse(savedChats);
-                setChats(parsed);
-                if (parsed.length > 0 && !currentChatId) {
-                    // Only set if not already set (though usually null on mount)
-                    // Logic handled in checking userApiKey usually, but here fine.
-                }
-            } catch (e) {
-                console.error("Failed to parse chats", e);
-            }
-        }
-    }, []);
-
-    // Save chats to LocalStorage whenever they change
-    useEffect(() => {
-        if (chats.length > 0) {
-            localStorage.setItem("polli_chats", JSON.stringify(chats));
-        } else {
-            // Optional: clear if empty? Or just keep empty array.
-            // localStorage.setItem("polli_chats", JSON.stringify([])); 
-            // Better to keep it to avoid clutter if user clears everything? 
-            // Actually, if we delete all, we should save empty array.
-            localStorage.setItem("polli_chats", JSON.stringify(chats));
-        }
-    }, [chats]);
-
-    // Initial API Key & Language check and Balance
-    useEffect(() => {
-        const savedKey = localStorage.getItem("pollinations_api_key");
-        const savedLang = localStorage.getItem("app_language") as "en" | "es";
-
-        if (savedKey) {
-            setUserApiKey(savedKey);
-        } else {
-            setShowApiKeyModal(true);
-        }
-
-        if (savedLang) {
-            setLanguage(savedLang);
-        }
+        if (savedLang) setLanguage(savedLang);
 
         const fetchBalance = async () => {
             if (!savedKey) return;
@@ -189,7 +142,26 @@ export default function ChatPage() {
         };
 
         fetchBalance();
+
+        // Load chats from LocalStorage
+        const savedChats = localStorage.getItem("polli_chats");
+        if (savedChats) {
+            try {
+                const parsed = JSON.parse(savedChats);
+                setChats(parsed);
+                if (parsed.length > 0) {
+                    setCurrentChatId(parsed[0].id);
+                }
+            } catch (e) { console.error("Failed to parse chats", e); }
+        }
     }, []);
+
+    // Save chats to LocalStorage listener
+    useEffect(() => {
+        if (chats.length >= 0) { // Always save, even if empty
+            localStorage.setItem("polli_chats", JSON.stringify(chats));
+        }
+    }, [chats]);
 
     useEffect(() => {
         if (scrollRef.current) {
