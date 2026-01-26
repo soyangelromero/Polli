@@ -518,7 +518,11 @@ export default function ChatPage() {
                 {/* Header */}
                 <header className="h-14 flex items-center justify-between px-4 md:px-6 border-b dark:border-gray-800 bg-claude-bg/80 backdrop-blur-md z-20 shrink-0">
                     <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                        <span className="font-black text-claude-accent tracking-tighter text-lg cursor-default hidden xs:block">POLLI</span>
+                        <img
+                            src="https://raw.githubusercontent.com/pollinations/pollinations/main/assets/logo.svg"
+                            alt="Pollinations Logo"
+                            className="h-8 w-auto invert dark:invert-0 brightness-200"
+                        />
                         <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-700 hidden xs:block"></div>
                         <h1 className="font-semibold text-xs md:text-sm truncate max-w-[100px] md:max-w-md text-gray-600 dark:text-gray-300 mr-2">
                             {currentChat?.title || (language === 'en' ? "New Session" : "Nueva Sesión")}
@@ -820,7 +824,7 @@ export default function ChatPage() {
 
                             <div className="text-center mt-6">
                                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] opacity-40">
-                                    Powered by <a href="https://pollinations.ai" target="_blank" rel="noopener noreferrer" className="hover:text-claude-accent transition-colors">Pollinations Core</a>
+                                    Powered by <a href="https://pollinations.ai" target="_blank" rel="noopener noreferrer" className="hover:text-claude-accent transition-colors">Pollinations API</a>
                                 </span>
                             </div>
                         </motion.div>
