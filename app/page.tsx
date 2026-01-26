@@ -623,7 +623,7 @@ export default function ChatPage() {
                             {messages.map((m, index) => (
                                 <div
                                     key={m.id || `msg-${index}`}
-                                    className={`flex w-full gap-3 md:gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 ${m.role === "user" ? "flex-reverse" : ""}`}
+                                    className={`flex w-full gap-3 md:gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 ${m.role === "user" ? "flex-row-reverse" : "flex-row"}`}
                                 >
                                     {/* Avatar - IA o Usuario */}
                                     <div className={`w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center shrink-0 shadow-sm border dark:border-white/10 ${m.role === "user" ? "bg-claude-accent text-white" : "bg-white dark:bg-gray-800"}`}>
@@ -634,8 +634,8 @@ export default function ChatPage() {
                                         <div
                                             id={`msg-${m.id}`}
                                             className={`relative group/msg transition-all duration-300 max-w-[90%] md:max-w-[85%] ${m.role === "user"
-                                                ? "bg-gray-100 dark:bg-white/10 p-3.5 md:p-4 rounded-[22px] rounded-tr-sm text-gray-800 dark:text-gray-100"
-                                                : "bg-gray-50/80 dark:bg-white/[0.04] p-4 md:p-5 rounded-[22px] rounded-tl-sm border border-black/[0.03] dark:border-white/[0.05] text-gray-800 dark:text-gray-200"
+                                                ? "bg-gray-100 dark:bg-white/10 p-3.5 md:p-4 rounded-[22px] rounded-tr-none text-gray-800 dark:text-gray-100"
+                                                : "bg-gray-50/80 dark:bg-white/[0.04] p-4 md:p-5 rounded-[22px] rounded-tl-none border border-black/[0.03] dark:border-white/[0.05] text-gray-800 dark:text-gray-200"
                                                 }`}
                                         >
                                             {m.role === "assistant" && m.reasoning && (
