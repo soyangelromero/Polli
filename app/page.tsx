@@ -612,51 +612,54 @@ export default function ChatPage() {
                             <p className="text-gray-500 text-sm md:text-lg max-w-md">{t.dropInstruction}</p>
                         </div>
                     ) : (
-                        <div className="max-w-4xl mx-auto flex flex-col gap-8 px-4 md:px-6">
+                        <div className="max-w-3xl mx-auto flex flex-col gap-6 px-4 md:px-6">
                             {messages.map((m, index) => (
                                 <div
                                     key={m.id || `msg-${index}`}
-                                    className={`flex w-full gap-3 md:gap-4 animate-in fade-in slide-in-from-bottom-3 duration-400 ${m.role === "user" ? "flex-row-reverse" : ""}`}
+                                    className={`flex w-full gap-3 md:gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 ${m.role === "user" ? "flex-reverse" : ""}`}
                                 >
-                                    <div className={`w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm transition-all ${m.role === "user" ? "bg-claude-accent text-white" : "bg-white dark:bg-gray-800 border dark:border-gray-700"}`}>
-                                        {m.role === "user" ? <User size={18} /> : <selectedModel.icon size={18} className={selectedModel.color} />}
-                                    </div>
+                                    {/* Avatar - Solo para IA en diseño minimalista similar a ChatGPT */}
+                                    {m.role === "assistant" && (
+                                        <div className={`w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center shrink-0 shadow-sm border dark:border-white/10 bg-white dark:bg-gray-800`}>
+                                            <selectedModel.icon size={18} className={selectedModel.color} />
+                                        </div>
+                                    )}
 
                                     <div className={`flex-1 min-w-0 flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
-                                        {m.role === "assistant" && m.reasoning && (
-                                            <div className="mb-2 max-w-full">
-                                                <button
-                                                    onClick={() => toggleReasoning(m.id)}
-                                                    className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-claude-accent transition-colors mb-1 group"
-                                                >
-                                                    <Brain size={14} className="group-hover:rotate-12 transition-transform" />
-                                                    <span>{showReasoning[m.id] ? t.hideReasoning : t.seeReasoning}</span>
-                                                    {showReasoning[m.id] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                                                </button>
-                                                <AnimatePresence>
-                                                    {showReasoning[m.id] && (
-                                                        <motion.div
-                                                            initial={{ height: 0, opacity: 0 }}
-                                                            animate={{ height: "auto", opacity: 1 }}
-                                                            exit={{ height: 0, opacity: 0 }}
-                                                            className="overflow-hidden"
-                                                        >
-                                                            <div className="p-4 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl border border-gray-200/50 dark:border-gray-700/50 text-sm text-gray-500 dark:text-gray-400 italic font-medium">
-                                                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.reasoning}</ReactMarkdown>
-                                                            </div>
-                                                        </motion.div>
-                                                    )}
-                                                </AnimatePresence>
-                                            </div>
-                                        )}
-
                                         <div
                                             id={`msg-${m.id}`}
-                                            className={`relative group/msg transition-all duration-300 w-full ${m.role === "user"
-                                                ? "bg-white dark:bg-gray-800 p-4 md:p-5 rounded-2xl rounded-tr-none border border-gray-100 dark:border-gray-700 shadow-sm text-gray-800 dark:text-gray-100 ml-auto w-fit"
-                                                : "text-gray-800 dark:text-gray-200 py-1"
+                                            className={`relative group/msg transition-all duration-300 max-w-[90%] md:max-w-[85%] ${m.role === "user"
+                                                ? "bg-gray-100 dark:bg-white/10 p-3.5 md:p-4 rounded-[22px] rounded-tr-sm text-gray-800 dark:text-gray-100"
+                                                : "bg-gray-50/80 dark:bg-white/[0.04] p-4 md:p-5 rounded-[22px] rounded-tl-sm border border-black/[0.03] dark:border-white/[0.05] text-gray-800 dark:text-gray-200"
                                                 }`}
                                         >
+                                            {m.role === "assistant" && m.reasoning && (
+                                                <div className="mb-3">
+                                                    <button
+                                                        onClick={() => toggleReasoning(m.id)}
+                                                        className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-claude-accent transition-colors mb-2 group"
+                                                    >
+                                                        <Brain size={14} className="group-hover:rotate-12 transition-transform" />
+                                                        <span>{showReasoning[m.id] ? t.hideReasoning : t.seeReasoning}</span>
+                                                        {showReasoning[m.id] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                                    </button>
+                                                    <AnimatePresence>
+                                                        {showReasoning[m.id] && (
+                                                            <motion.div
+                                                                initial={{ height: 0, opacity: 0 }}
+                                                                animate={{ height: "auto", opacity: 1 }}
+                                                                exit={{ height: 0, opacity: 0 }}
+                                                                className="overflow-hidden"
+                                                            >
+                                                                <div className="p-3 bg-black/5 dark:bg-white/5 rounded-xl text-sm text-gray-500 dark:text-gray-400 italic font-medium">
+                                                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.reasoning}</ReactMarkdown>
+                                                                </div>
+                                                            </motion.div>
+                                                        )}
+                                                    </AnimatePresence>
+                                                </div>
+                                            )}
+
                                             <div className="markdown-content prose dark:prose-invert max-w-none break-words leading-relaxed text-[15px] md:text-[16px] text-left w-full">
                                                 <ReactMarkdown
                                                     remarkPlugins={[remarkGfm]}
@@ -686,9 +689,9 @@ export default function ChatPage() {
                                             </div>
 
                                             {m.files && m.files.length > 0 && (
-                                                <div className={`flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100 dark:border-gray-800/50 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                                                <div className={`flex flex-wrap gap-2 mt-4 pt-4 border-t border-black/5 dark:border-white/5 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                                                     {m.files.map((f, i) => (
-                                                        <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-[11px] font-bold text-gray-600 dark:text-gray-400 group/file cursor-default shadow-sm sm:max-w-[200px]">
+                                                        <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/50 dark:bg-white/5 border border-black/5 dark:border-white/10 text-[11px] font-bold text-gray-500 dark:text-gray-400 group/file shadow-sm max-w-[180px]">
                                                             {f.type === "image" ? <ImageIcon size={14} className="text-claude-accent" /> : <FileText size={14} className="text-blue-500" />}
                                                             <span className="truncate">{f.name}</span>
                                                         </div>
@@ -700,48 +703,34 @@ export default function ChatPage() {
                                 </div>
                             ))}
                             {isLoading && (
-                                <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                                    <div className="flex gap-4 md:gap-6">
-                                        <div className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-800 shrink-0 flex items-center justify-center">
-                                            <div className="w-5 h-5 border-2 border-claude-accent/30 border-t-claude-accent rounded-full animate-spin" />
-                                        </div>
-                                        <div className="flex-1 space-y-3 pt-3">
-                                            <div className="h-2.5 bg-gray-100 dark:bg-gray-800 rounded w-1/4 animate-pulse" />
-                                            <div className="h-2.5 bg-gray-100 dark:bg-gray-800 rounded w-full animate-pulse delay-75" />
-                                            <div className="h-2.5 bg-gray-100 dark:bg-gray-800 rounded w-4/5 animate-pulse delay-150" />
-                                        </div>
+                                <div className="flex w-full gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                    <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-white/5 shrink-0 flex items-center justify-center">
+                                        <div className="w-5 h-5 border-2 border-claude-accent/30 border-t-claude-accent rounded-full animate-spin" />
                                     </div>
-                                    {loadingStatus && (
-                                        <div className="ml-13 md:ml-15 px-4 py-2 rounded-2xl bg-claude-accent/5 border border-claude-accent/10 text-xs font-bold text-claude-accent flex items-center gap-2 w-fit">
-                                            <Brain size={12} className="animate-bounce" />
-                                            <span className="opacity-80">{loadingStatus}</span>
-                                        </div>
-                                    )}
+                                    <div className="flex-1 max-w-sm mt-3 space-y-3">
+                                        <div className="h-2 bg-gray-100 dark:bg-white/5 rounded-full w-1/3 animate-pulse" />
+                                        <div className="h-2 bg-gray-100 dark:bg-white/5 rounded-full w-full animate-pulse delay-75" />
+                                        <div className="h-2 bg-gray-100 dark:bg-white/5 rounded-full w-4/5 animate-pulse delay-150" />
+                                    </div>
                                 </div>
                             )}
                         </div>
                     )}
+
                 </div>
 
                 {/* Fixed Input area at bottom */}
                 <div className="absolute bottom-0 left-0 right-0 px-4 md:px-6 pb-6 md:pb-14 pt-4 bg-gradient-to-t from-claude-bg via-claude-bg/85 to-transparent z-10">
-                    <motion.div
-                        initial={{ y: 30, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-                        className="max-w-3xl mx-auto relative group"
-                    >
-                        {/* THE "WOW" GLOW - Extremely prominent radial gradient */}
-                        <div className="absolute -inset-24 bg-[radial-gradient(circle_at_center,rgba(217,119,87,0.35),transparent_70%)] dark:bg-[radial-gradient(circle_at_center,rgba(217,119,87,0.45),transparent_70%)] rounded-[120px] blur-[120px] opacity-60 group-focus-within:opacity-100 transition-opacity duration-1000 pointer-events-none"></div>
-
-                        {/* MAGIC BORDER - Thicker (3px) and high contrast gradient */}
-                        <div className="relative p-[3px] rounded-[36px] bg-gradient-to-br from-white/60 via-claude-accent to-orange-500 dark:from-white/20 dark:via-claude-accent dark:to-orange-700 shadow-[0_0_100px_-20px_rgba(0,0,0,0.8)] overflow-hidden transition-all duration-700 group-focus-within:shadow-[0_0_120px_-25px_rgba(217,119,87,0.7)] group-focus-within:scale-[1.02] group-focus-within:p-[3.5px]">
-
-                            {/* Inner Glass Container */}
-                            <div className="relative bg-white/98 dark:bg-[#020202]/99 backdrop-blur-[80px] rounded-[33px] flex flex-col transition-all duration-700 group-focus-within:bg-white dark:group-focus-within:bg-black">
-
-                                {/* Focus Line (Glows intensely) */}
-                                <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-40 group-focus-within:opacity-100 transition-opacity duration-1000"></div>
+                    {/* Compact Output area at bottom */}
+                    <div className="absolute bottom-0 left-0 right-0 px-4 md:px-6 pb-6 md:pb-10 pt-4 bg-gradient-to-t from-claude-bg via-claude-bg/90 to-transparent z-10">
+                        <motion.div
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                            className="max-w-3xl mx-auto relative"
+                        >
+                            {/* Minimalist Glass Container */}
+                            <div className="relative bg-white/80 dark:bg-white/[0.03] backdrop-blur-3xl rounded-[28px] border border-black/[0.05] dark:border-white/10 shadow-2xl transition-all duration-300 group-focus-within:border-claude-accent/30 group-focus-within:shadow-claude-accent/5">
 
                                 {/* Attached Files Preview */}
                                 <AnimatePresence>
@@ -750,23 +739,23 @@ export default function ChatPage() {
                                             initial={{ height: 0, opacity: 0 }}
                                             animate={{ height: "auto", opacity: 1 }}
                                             exit={{ height: 0, opacity: 0 }}
-                                            className="flex gap-6 p-6 pb-2 border-b border-gray-100/40 dark:border-white/10 overflow-x-auto scrollbar-hide"
+                                            className="flex gap-4 p-4 pb-0 overflow-x-auto scrollbar-hide"
                                         >
                                             {attachedFiles.map((file, i) => (
-                                                <div key={i} className="relative group/file shrink-0 w-20 h-20 rounded-[22px] overflow-hidden border-2 border-white/40 dark:border-white/10 bg-white/10 dark:bg-white/[0.1] shadow-2xl transition-all hover:scale-115 hover:ring-4 hover:ring-claude-accent ring-offset-4 dark:ring-offset-black">
+                                                <div key={i} className="relative group/file shrink-0 w-14 h-14 rounded-xl overflow-hidden border border-black/10 dark:border-white/10 bg-white dark:bg-gray-800 shadow-sm transition-all hover:scale-105">
                                                     {file.type === "image" ? (
                                                         <img src={file.preview} alt="preview" className="w-full h-full object-cover" />
                                                     ) : (
-                                                        <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center bg-gradient-to-tr from-white/10 to-transparent">
-                                                            <FileText size={28} className="text-claude-accent mb-1 drop-shadow-2xl" />
-                                                            <span className="text-[12px] font-black truncate w-full px-2 text-gray-300">{file.file.name}</span>
+                                                        <div className="w-full h-full flex flex-col items-center justify-center p-1 text-center">
+                                                            <FileText size={20} className="text-claude-accent mb-0.5" />
+                                                            <span className="text-[9px] font-bold truncate w-full px-1 text-gray-400">{file.file.name}</span>
                                                         </div>
                                                     )}
                                                     <button
                                                         onClick={() => removeFile(i)}
-                                                        className="absolute inset-0 flex items-center justify-center bg-black/85 backdrop-blur-[5px] text-white opacity-0 group-hover/file:opacity-100 transition-all duration-500"
+                                                        className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[2px] text-white opacity-0 group-hover/file:opacity-100 transition-all duration-300"
                                                     >
-                                                        <Trash2 size={26} className="text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,1)] scale-75 group-hover:scale-100 transition-transform" />
+                                                        <Trash2 size={16} className="text-red-400" />
                                                     </button>
                                                 </div>
                                             ))}
@@ -774,13 +763,13 @@ export default function ChatPage() {
                                     )}
                                 </AnimatePresence>
 
-                                <div className="flex items-end p-5 md:p-8 gap-5">
+                                <div className="flex items-end p-2.5 md:p-3 gap-2">
                                     <button
                                         onClick={() => fileInputRef.current?.click()}
-                                        className="p-5 hover:bg-gray-100 dark:hover:bg-white/20 rounded-full transition-all shrink-0 text-gray-400 hover:text-claude-accent group/btn active:scale-75 shadow-xl hover:shadow-claude-accent/20"
-                                        title="Adjuntar archivos"
+                                        className="p-3 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-all shrink-0 text-gray-400 hover:text-claude-accent group/btn active:scale-95"
+                                        title="Adjuntar"
                                     >
-                                        <Paperclip size={26} className="group-hover/btn:rotate-45 transition-transform duration-700" />
+                                        <Paperclip size={20} className="group-hover/btn:rotate-12 transition-transform duration-300" />
                                         <input
                                             type="file"
                                             ref={fileInputRef}
@@ -801,7 +790,7 @@ export default function ChatPage() {
                                             }
                                         }}
                                         placeholder={t.placeholder.replace("{model}", selectedModel.name)}
-                                        className="flex-1 bg-transparent border-none focus:ring-0 resize-none py-6 px-1 text-[17px] md:text-[20px] leading-[1.7] min-h-[70px] max-h-[350px] placeholder-gray-500 dark:placeholder-gray-700 font-bold scrollbar-hide text-gray-800 dark:text-gray-100 selection:bg-claude-accent/60"
+                                        className="flex-1 bg-transparent border-none focus:ring-0 resize-none py-3 px-1 text-[16px] md:text-[17px] leading-relaxed min-h-[48px] max-h-[250px] placeholder-gray-400 dark:placeholder-gray-500 font-medium scrollbar-hide text-gray-800 dark:text-gray-100 selection:bg-claude-accent/30"
                                         rows={1}
                                         style={{ height: 'auto' }}
                                     />
@@ -809,99 +798,100 @@ export default function ChatPage() {
                                     {isLoading ? (
                                         <button
                                             onClick={handleStop}
-                                            className="p-5 rounded-full transition-all shrink-0 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white group active:scale-75 shadow-[0_0_40px_rgba(239,68,68,0.3)]"
+                                            className="p-3 rounded-full transition-all shrink-0 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white group active:scale-95"
                                             title={t.stopGeneration}
                                         >
-                                            <Square size={26} className="fill-current group-hover:fill-white" />
+                                            <Square size={20} className="fill-current group-hover:fill-white" />
                                         </button>
                                     ) : (
                                         <button
                                             onClick={handleSend}
                                             disabled={isLoading || (!input.trim() && attachedFiles.length === 0)}
-                                            className={`p-5 rounded-full transition-all shrink-0 transform ${input.trim() || attachedFiles.length > 0
-                                                ? "bg-gradient-to-br from-claude-accent to-orange-700 text-white hover:brightness-135 hover:-translate-y-3 active:scale-75 shadow-[0_20px_40px_-10px_rgba(217,119,87,0.7)]"
-                                                : "bg-gray-200/50 dark:bg-white/5 text-gray-500 cursor-not-allowed opacity-20"
+                                            className={`p-3 rounded-full transition-all shrink-0 transform ${input.trim() || attachedFiles.length > 0
+                                                ? "bg-claude-accent text-white shadow-lg shadow-claude-accent/20 hover:-translate-y-0.5 active:scale-95"
+                                                : "text-gray-300 dark:text-gray-600 cursor-not-allowed"
                                                 }`}
                                         >
-                                            <Send size={26} className={`${input.trim() || attachedFiles.length > 0 ? "fill-white/30 ml-0.5" : "ml-0.5"}`} />
+                                            <Send size={20} className="ml-0.5" />
                                         </button>
                                     )}
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="text-center mt-12">
-                            <span className="text-[12px] text-gray-400/30 font-black uppercase tracking-[0.6em] block animate-pulse">
-                                Precision Orchestration Layer • <a href="https://pollinations.ai" target="_blank" rel="noopener noreferrer" className="hover:text-claude-accent transition-colors">Pollinations Core</a>
-                            </span>
-                        </div>
-                    </motion.div>
-                </div>
-            </div>
-
-            {/* API Key Modal Overlay */}
-            <AnimatePresence>
-                {showApiKeyModal && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] bg-gray-900/90 backdrop-blur-3xl flex items-center justify-center p-6"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.8, y: 30 }}
-                            animate={{ scale: 1, y: 0 }}
-                            className="w-full max-w-md bg-white dark:bg-[#050505] rounded-[40px] shadow-[0_0_100px_rgba(0,0,0,1)] overflow-hidden border border-gray-100 dark:border-white/5 p-[1px] bg-gradient-to-br from-white/20 to-transparent"
-                        >
-                            <div className="bg-white dark:bg-[#050505] rounded-[39px] p-10">
-                                <div className="w-20 h-20 bg-claude-accent/10 rounded-3xl flex items-center justify-center mb-8 mx-auto shadow-inner">
-                                    <Brain size={40} className="text-claude-accent" />
-                                </div>
-                                <h2 className="text-3xl font-black text-center mb-3 text-gray-900 dark:text-gray-100 tracking-tight">{t.configTitle}</h2>
-                                <p className="text-sm text-center text-gray-500 dark:text-gray-400 mb-10 px-4 leading-relaxed font-medium">
-                                    {t.configDesc}
-                                </p>
-
-                                <div className="space-y-5">
-                                    <div className="relative">
-                                        <input
-                                            type="password"
-                                            placeholder={t.configPlaceholder}
-                                            value={tempKey}
-                                            onChange={(e) => setTempKey(e.target.value)}
-                                            className="w-full h-16 px-6 rounded-2xl bg-gray-100 dark:bg-white/[0.03] border-2 border-transparent focus:border-claude-accent focus:ring-4 focus:ring-claude-accent/10 transition-all font-mono text-base outline-none text-center tracking-widest"
-                                        />
-                                    </div>
-                                    <button
-                                        onClick={() => {
-                                            if (tempKey.startsWith("sk_") || tempKey.startsWith("pk_")) {
-                                                localStorage.setItem("pollinations_api_key", tempKey);
-                                                setUserApiKey(tempKey);
-                                                setShowApiKeyModal(false);
-                                            } else {
-                                                alert(t.errorApiKey);
-                                            }
-                                        }}
-                                        className="w-full h-16 bg-gradient-to-br from-claude-accent to-orange-600 text-white rounded-2xl font-black text-lg hover:shadow-[0_20px_40px_-10px_rgba(217,119,87,0.5)] hover:-translate-y-1 active:scale-95 transition-all uppercase tracking-widest"
-                                    >
-                                        {t.configBtn}
-                                    </button>
-                                </div>
-                                <div className="mt-10 pt-8 border-t dark:border-white/5 text-center">
-                                    <a
-                                        href="https://pollinations.ai"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-xs font-black text-gray-400 hover:text-claude-accent transition-colors uppercase tracking-[0.2em]"
-                                    >
-                                        {t.getApiKey}
-                                    </a>
-                                </div>
+                            <div className="text-center mt-6">
+                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] opacity-40">
+                                    Powered by <a href="https://pollinations.ai" target="_blank" rel="noopener noreferrer" className="hover:text-claude-accent transition-colors">Pollinations Core</a>
+                                </span>
                             </div>
                         </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+
+                    </div>
+                </div>
+
+                {/* API Key Modal Overlay */}
+                <AnimatePresence>
+                    {showApiKeyModal && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[100] bg-gray-900/90 backdrop-blur-3xl flex items-center justify-center p-6"
+                        >
+                            <motion.div
+                                initial={{ scale: 0.8, y: 30 }}
+                                animate={{ scale: 1, y: 0 }}
+                                className="w-full max-w-md bg-white dark:bg-[#050505] rounded-[40px] shadow-[0_0_100px_rgba(0,0,0,1)] overflow-hidden border border-gray-100 dark:border-white/5 p-[1px] bg-gradient-to-br from-white/20 to-transparent"
+                            >
+                                <div className="bg-white dark:bg-[#050505] rounded-[39px] p-10">
+                                    <div className="w-20 h-20 bg-claude-accent/10 rounded-3xl flex items-center justify-center mb-8 mx-auto shadow-inner">
+                                        <Brain size={40} className="text-claude-accent" />
+                                    </div>
+                                    <h2 className="text-3xl font-black text-center mb-3 text-gray-900 dark:text-gray-100 tracking-tight">{t.configTitle}</h2>
+                                    <p className="text-sm text-center text-gray-500 dark:text-gray-400 mb-10 px-4 leading-relaxed font-medium">
+                                        {t.configDesc}
+                                    </p>
+
+                                    <div className="space-y-5">
+                                        <div className="relative">
+                                            <input
+                                                type="password"
+                                                placeholder={t.configPlaceholder}
+                                                value={tempKey}
+                                                onChange={(e) => setTempKey(e.target.value)}
+                                                className="w-full h-16 px-6 rounded-2xl bg-gray-100 dark:bg-white/[0.03] border-2 border-transparent focus:border-claude-accent focus:ring-4 focus:ring-claude-accent/10 transition-all font-mono text-base outline-none text-center tracking-widest"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                if (tempKey.startsWith("sk_") || tempKey.startsWith("pk_")) {
+                                                    localStorage.setItem("pollinations_api_key", tempKey);
+                                                    setUserApiKey(tempKey);
+                                                    setShowApiKeyModal(false);
+                                                } else {
+                                                    alert(t.errorApiKey);
+                                                }
+                                            }}
+                                            className="w-full h-16 bg-gradient-to-br from-claude-accent to-orange-600 text-white rounded-2xl font-black text-lg hover:shadow-[0_20px_40px_-10px_rgba(217,119,87,0.5)] hover:-translate-y-1 active:scale-95 transition-all uppercase tracking-widest"
+                                        >
+                                            {t.configBtn}
+                                        </button>
+                                    </div>
+                                    <div className="mt-10 pt-8 border-t dark:border-white/5 text-center">
+                                        <a
+                                            href="https://pollinations.ai"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-xs font-black text-gray-400 hover:text-claude-accent transition-colors uppercase tracking-[0.2em]"
+                                        >
+                                            {t.getApiKey}
+                                        </a>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
         </div>
     );
 }
