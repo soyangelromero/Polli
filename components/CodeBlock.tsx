@@ -25,17 +25,17 @@ export const CodeBlock = ({ language, value }: CodeBlockProps) => {
     };
 
     return (
-        <div className="relative group rounded-lg overflow-hidden my-4 border border-gray-700 bg-[#1e1e1e] w-full">
-            <div className="flex items-center justify-between px-4 py-2 bg-[#2d2d2d] border-b border-gray-700 text-xs text-gray-400">
-                <span className="font-mono lowercase">{language || "text"}</span>
+        <div className="relative group rounded-2xl overflow-hidden my-6 border border-black/10 dark:border-white/10 bg-[#0d0d0d] shadow-xl w-full">
+            <div className="flex items-center justify-between px-5 py-2.5 bg-white/5 backdrop-blur-md border-b border-white/5 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                <span className="font-mono">{language || "code"}</span>
                 <button
                     onClick={copyToClipboard}
-                    className="flex items-center gap-1.5 hover:text-white transition-colors"
+                    className="flex items-center gap-1.5 hover:text-white transition-all active:scale-90"
                 >
                     {isCopied ? (
                         <>
                             <Check size={14} className="text-green-500" />
-                            <span>Copied!</span>
+                            <span className="text-green-500">Copied</span>
                         </>
                     ) : (
                         <>
@@ -45,17 +45,18 @@ export const CodeBlock = ({ language, value }: CodeBlockProps) => {
                     )}
                 </button>
             </div>
-            <div className="text-sm font-mono overflow-auto custom-scrollbar">
+            <div className="text-sm font-mono overflow-auto custom-scrollbar leading-relaxed">
                 <SyntaxHighlighter
                     language={language}
                     style={vscDarkPlus}
                     customStyle={{
                         margin: 0,
-                        padding: "1rem",
+                        padding: "1.25rem",
                         background: "transparent",
+                        fontSize: "14px",
                     }}
                     wrapLines={true}
-                    wrapLongLines={true} // Avoid horizontal scroll if possible, or false if you prefer scroll
+                    wrapLongLines={true}
                 >
                     {value}
                 </SyntaxHighlighter>

@@ -82,10 +82,10 @@
   --input: #1f2937;
   --ring: #d1d5db;
 
-  --claude-bg: #111111;
-  --claude-sidebar: #171717;
-  --claude-user-msg: #212121;
-  --claude-ai-msg: #111111;
+  --claude-bg: #050505;
+  --claude-sidebar: #0a0a0a;
+  --claude-user-msg: #1a1a1a;
+  --claude-ai-msg: #050505;
 }
 
 @layer base {
@@ -102,6 +102,7 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;

@@ -432,7 +432,7 @@ export default function ChatPage() {
             </AnimatePresence>
 
             {/* Sidebar */}
-            <div className="w-72 bg-claude-sidebar hidden md:flex flex-col border-r dark:border-gray-800 transition-all z-30">
+            <div className="w-72 bg-claude-sidebar/70 backdrop-blur-3xl hidden md:flex flex-col border-r border-black/5 dark:border-white/5 transition-all z-30">
                 <div className="p-4">
                     <button
                         onClick={createNewChat}
@@ -523,7 +523,7 @@ export default function ChatPage() {
             {/* Main Chat */}
             <div className="flex-1 flex flex-col relative overflow-hidden bg-claude-bg">
                 {/* Header */}
-                <header className="h-14 flex items-center justify-between px-4 md:px-6 border-b dark:border-gray-800 bg-claude-bg/80 backdrop-blur-md z-20 shrink-0">
+                <header className="h-14 flex items-center justify-between px-4 md:px-6 border-b border-black/5 dark:border-white/5 bg-claude-bg/60 backdrop-blur-2xl z-20 shrink-0">
                     <div className="flex items-center gap-2 md:gap-3 min-w-0">
                         <span className="font-black text-claude-accent tracking-tighter text-lg cursor-default hidden xs:block">POLLI</span>
                         <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-700 hidden xs:block"></div>
@@ -621,9 +621,13 @@ export default function ChatPage() {
                     ) : (
                         <div className="max-w-4xl mx-auto flex flex-col gap-8 px-4 md:px-8 py-10">
                             {messages.map((m, index) => (
-                                <div
+                                <motion.div
+                                    layout
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ type: "spring", damping: 25, stiffness: 200 }}
                                     key={m.id || `msg-${index}`}
-                                    className={`flex w-full gap-3 md:gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 ${m.role === "user" ? "flex-row-reverse" : "flex-row"}`}
+                                    className={`flex w-full gap-3 md:gap-4 ${m.role === "user" ? "flex-row-reverse" : "flex-row"}`}
                                 >
                                     {/* Avatar - IA o Usuario */}
                                     <div className={`w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center shrink-0 shadow-sm border dark:border-white/10 ${m.role === "user" ? "bg-claude-accent text-white" : "bg-white dark:bg-gray-800"}`}>
@@ -633,9 +637,9 @@ export default function ChatPage() {
                                     <div className={`flex-1 min-w-0 flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
                                         <div
                                             id={`msg-${m.id}`}
-                                            className={`relative group/msg transition-all duration-300 max-w-[90%] md:max-w-[85%] ${m.role === "user"
-                                                ? "bg-gray-100 dark:bg-white/10 p-3.5 md:p-4 rounded-[22px] rounded-tr-none text-gray-800 dark:text-gray-100"
-                                                : "bg-gray-50/80 dark:bg-white/[0.04] p-4 md:p-5 rounded-[22px] rounded-tl-none border border-black/[0.03] dark:border-white/[0.05] text-gray-800 dark:text-gray-200"
+                                            className={`relative group/msg transition-all duration-300 w-full ${m.role === "user"
+                                                ? "bg-gray-100 dark:bg-white/10 p-3.5 md:p-4 rounded-[22px] rounded-tr-none text-gray-800 dark:text-gray-100 max-w-[85%]"
+                                                : "bg-transparent p-0 md:pt-1 text-gray-800 dark:text-gray-200 max-w-none"
                                                 }`}
                                         >
                                             {m.role === "assistant" && m.reasoning && (
@@ -705,7 +709,7 @@ export default function ChatPage() {
                                             )}
                                         </div>
                                     </div>
-                                </div>
+                                </motion.div>
                             ))}
                             {isLoading && (
                                 <div className="flex w-full gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -724,179 +728,176 @@ export default function ChatPage() {
 
                 </div>
 
-                {/* Fixed Input area at bottom */}
-                <div className="absolute bottom-0 left-0 right-0 px-4 md:px-6 pb-6 md:pb-14 pt-4 bg-gradient-to-t from-claude-bg via-claude-bg/85 to-transparent z-10">
-                    {/* Compact Output area at bottom */}
-                    <div className="absolute bottom-0 left-0 right-0 px-4 md:px-6 pb-6 md:pb-10 pt-4 bg-gradient-to-t from-claude-bg via-claude-bg/90 to-transparent z-10">
-                        <motion.div
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                            className="max-w-4xl mx-auto relative"
-                        >
-                            {/* Minimalist Glass Container */}
-                            <div className="relative bg-white/80 dark:bg-white/[0.03] backdrop-blur-3xl rounded-[28px] border border-black/[0.05] dark:border-white/10 shadow-2xl transition-all duration-300 group-focus-within:border-claude-accent/30 group-focus-within:shadow-claude-accent/5">
+                {/* Fixed Input area at bottom - Floating Island Style */}
+                <div className="absolute bottom-0 left-0 right-0 px-4 md:px-6 pb-8 md:pb-12 pt-10 bg-gradient-to-t from-claude-bg via-claude-bg/80 to-transparent z-10 pointer-events-none">
+                    <motion.div
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                        className="max-w-4xl mx-auto relative pointer-events-auto"
+                    >
+                        {/* Minimalist Glass Container - Floating */}
+                        <div className="relative bg-white/70 dark:bg-white/[0.05] backdrop-blur-2xl rounded-[32px] border border-black/[0.08] dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] transition-all duration-500 group-focus-within:shadow-claude-accent/5">
 
-                                {/* Attached Files Preview */}
-                                <AnimatePresence>
-                                    {attachedFiles.length > 0 && (
-                                        <motion.div
-                                            initial={{ height: 0, opacity: 0 }}
-                                            animate={{ height: "auto", opacity: 1 }}
-                                            exit={{ height: 0, opacity: 0 }}
-                                            className="flex gap-4 p-4 pb-0 overflow-x-auto scrollbar-hide"
-                                        >
-                                            {attachedFiles.map((file, i) => (
-                                                <div key={i} className="relative group/file shrink-0 w-14 h-14 rounded-xl overflow-hidden border border-black/10 dark:border-white/10 bg-white dark:bg-gray-800 shadow-sm transition-all hover:scale-105">
-                                                    {file.type === "image" ? (
-                                                        <img src={file.preview} alt="preview" className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex flex-col items-center justify-center p-1 text-center">
-                                                            <FileText size={20} className="text-claude-accent mb-0.5" />
-                                                            <span className="text-[9px] font-bold truncate w-full px-1 text-gray-400">{file.file.name}</span>
-                                                        </div>
-                                                    )}
-                                                    <button
-                                                        onClick={() => removeFile(i)}
-                                                        className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[2px] text-white opacity-0 group-hover/file:opacity-100 transition-all duration-300"
-                                                    >
-                                                        <Trash2 size={16} className="text-red-400" />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-
-                                <div className="flex items-end p-2.5 md:p-3 gap-2">
-                                    <button
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="p-3 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-all shrink-0 text-gray-400 hover:text-claude-accent group/btn active:scale-95"
-                                        title="Adjuntar"
+                            {/* Attached Files Preview */}
+                            <AnimatePresence>
+                                {attachedFiles.length > 0 && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: "auto", opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="flex gap-4 p-4 pb-0 overflow-x-auto scrollbar-hide"
                                     >
-                                        <Paperclip size={20} className="group-hover/btn:rotate-12 transition-transform duration-300" />
-                                        <input
-                                            type="file"
-                                            ref={fileInputRef}
-                                            onChange={handleFileUpload}
-                                            className="hidden"
-                                            multiple
-                                            accept="image/*,application/pdf"
-                                        />
-                                    </button>
+                                        {attachedFiles.map((file, i) => (
+                                            <div key={i} className="relative group/file shrink-0 w-14 h-14 rounded-xl overflow-hidden border border-black/10 dark:border-white/10 bg-white dark:bg-gray-800 shadow-sm transition-all hover:scale-105">
+                                                {file.type === "image" ? (
+                                                    <img src={file.preview} alt="preview" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex flex-col items-center justify-center p-1 text-center">
+                                                        <FileText size={20} className="text-claude-accent mb-0.5" />
+                                                        <span className="text-[9px] font-bold truncate w-full px-1 text-gray-400">{file.file.name}</span>
+                                                    </div>
+                                                )}
+                                                <button
+                                                    onClick={() => removeFile(i)}
+                                                    className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[2px] text-white opacity-0 group-hover/file:opacity-100 transition-all duration-300"
+                                                >
+                                                    <Trash2 size={16} className="text-red-400" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
 
-                                    <textarea
-                                        value={input}
-                                        onChange={(e) => setInput(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === "Enter" && !e.shiftKey) {
-                                                e.preventDefault();
-                                                handleSend();
+                            <div className="flex items-end p-2.5 md:p-3 gap-2">
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="p-3 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-all shrink-0 text-gray-400 hover:text-claude-accent group/btn active:scale-95"
+                                    title="Adjuntar"
+                                >
+                                    <Paperclip size={20} className="group-hover/btn:rotate-12 transition-transform duration-300" />
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleFileUpload}
+                                        className="hidden"
+                                        multiple
+                                        accept="image/*,application/pdf"
+                                    />
+                                </button>
+
+                                <textarea
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleSend();
+                                        }
+                                    }}
+                                    placeholder={t.placeholder.replace("{model}", selectedModel.name)}
+                                    className="flex-1 bg-transparent border-none focus:ring-0 resize-none py-3 px-1 text-[16px] md:text-[17px] leading-relaxed min-h-[48px] max-h-[250px] placeholder-gray-400 dark:placeholder-gray-500 font-medium scrollbar-hide text-gray-800 dark:text-gray-100 selection:bg-claude-accent/30"
+                                    rows={1}
+                                    style={{ height: 'auto' }}
+                                />
+
+                                {isLoading ? (
+                                    <button
+                                        onClick={handleStop}
+                                        className="p-3 rounded-full transition-all shrink-0 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white group active:scale-95"
+                                        title={t.stopGeneration}
+                                    >
+                                        <Square size={20} className="fill-current group-hover:fill-white" />
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={handleSend}
+                                        disabled={isLoading || (!input.trim() && attachedFiles.length === 0)}
+                                        className={`p-3 rounded-full transition-all shrink-0 transform ${input.trim() || attachedFiles.length > 0
+                                            ? "bg-claude-accent text-white shadow-lg shadow-claude-accent/20 hover:-translate-y-0.5 active:scale-95"
+                                            : "text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                                            }`}
+                                    >
+                                        <Send size={20} className="ml-0.5" />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="text-center mt-6">
+                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] opacity-40">
+                                Powered by <a href="https://pollinations.ai" target="_blank" rel="noopener noreferrer" className="hover:text-claude-accent transition-colors">Pollinations API</a>
+                            </span>
+                        </div>
+                    </motion.div>
+
+                </div>
+            </div>
+
+            {/* API Key Modal Overlay */}
+            <AnimatePresence>
+                {showApiKeyModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] bg-gray-900/90 backdrop-blur-3xl flex items-center justify-center p-6"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.8, y: 30 }}
+                            animate={{ scale: 1, y: 0 }}
+                            className="w-full max-w-md bg-white dark:bg-[#050505] rounded-[40px] shadow-[0_0_100px_rgba(0,0,0,1)] overflow-hidden border border-gray-100 dark:border-white/5 p-[1px] bg-gradient-to-br from-white/20 to-transparent"
+                        >
+                            <div className="bg-white dark:bg-[#050505] rounded-[39px] p-10">
+                                <div className="w-20 h-20 bg-claude-accent/10 rounded-3xl flex items-center justify-center mb-8 mx-auto shadow-inner">
+                                    <Brain size={40} className="text-claude-accent" />
+                                </div>
+                                <h2 className="text-3xl font-black text-center mb-3 text-gray-900 dark:text-gray-100 tracking-tight">{t.configTitle}</h2>
+                                <p className="text-sm text-center text-gray-500 dark:text-gray-400 mb-10 px-4 leading-relaxed font-medium">
+                                    {t.configDesc}
+                                </p>
+
+                                <div className="space-y-5">
+                                    <div className="relative">
+                                        <input
+                                            type="password"
+                                            placeholder={t.configPlaceholder}
+                                            value={tempKey}
+                                            onChange={(e) => setTempKey(e.target.value)}
+                                            className="w-full h-16 px-6 rounded-2xl bg-gray-100 dark:bg-white/[0.03] border-2 border-transparent focus:border-claude-accent focus:ring-4 focus:ring-claude-accent/10 transition-all font-mono text-base outline-none text-center tracking-widest"
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            if (tempKey.startsWith("sk_") || tempKey.startsWith("pk_")) {
+                                                localStorage.setItem("pollinations_api_key", tempKey);
+                                                setUserApiKey(tempKey);
+                                                setShowApiKeyModal(false);
+                                            } else {
+                                                alert(t.errorApiKey);
                                             }
                                         }}
-                                        placeholder={t.placeholder.replace("{model}", selectedModel.name)}
-                                        className="flex-1 bg-transparent border-none focus:ring-0 resize-none py-3 px-1 text-[16px] md:text-[17px] leading-relaxed min-h-[48px] max-h-[250px] placeholder-gray-400 dark:placeholder-gray-500 font-medium scrollbar-hide text-gray-800 dark:text-gray-100 selection:bg-claude-accent/30"
-                                        rows={1}
-                                        style={{ height: 'auto' }}
-                                    />
-
-                                    {isLoading ? (
-                                        <button
-                                            onClick={handleStop}
-                                            className="p-3 rounded-full transition-all shrink-0 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white group active:scale-95"
-                                            title={t.stopGeneration}
-                                        >
-                                            <Square size={20} className="fill-current group-hover:fill-white" />
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={handleSend}
-                                            disabled={isLoading || (!input.trim() && attachedFiles.length === 0)}
-                                            className={`p-3 rounded-full transition-all shrink-0 transform ${input.trim() || attachedFiles.length > 0
-                                                ? "bg-claude-accent text-white shadow-lg shadow-claude-accent/20 hover:-translate-y-0.5 active:scale-95"
-                                                : "text-gray-300 dark:text-gray-600 cursor-not-allowed"
-                                                }`}
-                                        >
-                                            <Send size={20} className="ml-0.5" />
-                                        </button>
-                                    )}
+                                        className="w-full h-16 bg-gradient-to-br from-claude-accent to-orange-600 text-white rounded-2xl font-black text-lg hover:shadow-[0_20px_40px_-10px_rgba(217,119,87,0.5)] hover:-translate-y-1 active:scale-95 transition-all uppercase tracking-widest"
+                                    >
+                                        {t.configBtn}
+                                    </button>
+                                </div>
+                                <div className="mt-10 pt-8 border-t dark:border-white/5 text-center">
+                                    <a
+                                        href="https://pollinations.ai"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs font-black text-gray-400 hover:text-claude-accent transition-colors uppercase tracking-[0.2em]"
+                                    >
+                                        {t.getApiKey}
+                                    </a>
                                 </div>
                             </div>
-
-                            <div className="text-center mt-6">
-                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] opacity-40">
-                                    Powered by <a href="https://pollinations.ai" target="_blank" rel="noopener noreferrer" className="hover:text-claude-accent transition-colors">Pollinations API</a>
-                                </span>
-                            </div>
                         </motion.div>
-
-                    </div>
-                </div>
-
-                {/* API Key Modal Overlay */}
-                <AnimatePresence>
-                    {showApiKeyModal && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="fixed inset-0 z-[100] bg-gray-900/90 backdrop-blur-3xl flex items-center justify-center p-6"
-                        >
-                            <motion.div
-                                initial={{ scale: 0.8, y: 30 }}
-                                animate={{ scale: 1, y: 0 }}
-                                className="w-full max-w-md bg-white dark:bg-[#050505] rounded-[40px] shadow-[0_0_100px_rgba(0,0,0,1)] overflow-hidden border border-gray-100 dark:border-white/5 p-[1px] bg-gradient-to-br from-white/20 to-transparent"
-                            >
-                                <div className="bg-white dark:bg-[#050505] rounded-[39px] p-10">
-                                    <div className="w-20 h-20 bg-claude-accent/10 rounded-3xl flex items-center justify-center mb-8 mx-auto shadow-inner">
-                                        <Brain size={40} className="text-claude-accent" />
-                                    </div>
-                                    <h2 className="text-3xl font-black text-center mb-3 text-gray-900 dark:text-gray-100 tracking-tight">{t.configTitle}</h2>
-                                    <p className="text-sm text-center text-gray-500 dark:text-gray-400 mb-10 px-4 leading-relaxed font-medium">
-                                        {t.configDesc}
-                                    </p>
-
-                                    <div className="space-y-5">
-                                        <div className="relative">
-                                            <input
-                                                type="password"
-                                                placeholder={t.configPlaceholder}
-                                                value={tempKey}
-                                                onChange={(e) => setTempKey(e.target.value)}
-                                                className="w-full h-16 px-6 rounded-2xl bg-gray-100 dark:bg-white/[0.03] border-2 border-transparent focus:border-claude-accent focus:ring-4 focus:ring-claude-accent/10 transition-all font-mono text-base outline-none text-center tracking-widest"
-                                            />
-                                        </div>
-                                        <button
-                                            onClick={() => {
-                                                if (tempKey.startsWith("sk_") || tempKey.startsWith("pk_")) {
-                                                    localStorage.setItem("pollinations_api_key", tempKey);
-                                                    setUserApiKey(tempKey);
-                                                    setShowApiKeyModal(false);
-                                                } else {
-                                                    alert(t.errorApiKey);
-                                                }
-                                            }}
-                                            className="w-full h-16 bg-gradient-to-br from-claude-accent to-orange-600 text-white rounded-2xl font-black text-lg hover:shadow-[0_20px_40px_-10px_rgba(217,119,87,0.5)] hover:-translate-y-1 active:scale-95 transition-all uppercase tracking-widest"
-                                        >
-                                            {t.configBtn}
-                                        </button>
-                                    </div>
-                                    <div className="mt-10 pt-8 border-t dark:border-white/5 text-center">
-                                        <a
-                                            href="https://pollinations.ai"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-xs font-black text-gray-400 hover:text-claude-accent transition-colors uppercase tracking-[0.2em]"
-                                        >
-                                            {t.getApiKey}
-                                        </a>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
