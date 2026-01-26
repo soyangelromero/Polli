@@ -103,7 +103,9 @@ export async function POST(req: NextRequest) {
             lastMessage.content = contentParts;
         }
 
-        const finalPayload = [systemMessage, ...prunedMessages];
+        // Avoid duplicating system prompt if already present in history
+        const hasSystemMessage = prunedMessages.some((m: any) => m.role === "system");
+        const finalPayload = hasSystemMessage ? prunedMessages : [systemMessage, ...prunedMessages];
 
         const response = await fetch("https://gen.pollinations.ai/v1/chat/completions", {
             method: "POST",
