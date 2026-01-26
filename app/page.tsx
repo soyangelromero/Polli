@@ -619,7 +619,7 @@ export default function ChatPage() {
                             <p className="text-gray-500 text-sm md:text-lg max-w-md">{t.dropInstruction}</p>
                         </div>
                     ) : (
-                        <div className="max-w-3xl mx-auto flex flex-col gap-6 px-4 md:px-6">
+                        <div className="max-w-5xl mx-auto flex flex-col gap-8 px-4 md:px-8 py-10">
                             {messages.map((m, index) => (
                                 <div
                                     key={m.id || `msg-${index}`}
@@ -732,7 +732,7 @@ export default function ChatPage() {
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                            className="max-w-3xl mx-auto relative"
+                            className="max-w-5xl mx-auto relative"
                         >
                             {/* Minimalist Glass Container */}
                             <div className="relative bg-white/80 dark:bg-white/[0.03] backdrop-blur-3xl rounded-[28px] border border-black/[0.05] dark:border-white/10 shadow-2xl transition-all duration-300 group-focus-within:border-claude-accent/30 group-focus-within:shadow-claude-accent/5">
