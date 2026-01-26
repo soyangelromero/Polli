@@ -1,10 +1,16 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Plus, Image as ImageIcon, FileText, User, Bot, Trash2, Paperclip, MessageSquare, ChevronDown, ChevronUp, Brain, Sparkles, Cpu, Upload, Square, RotateCw } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import dynamic from "next/dynamic";
+import { Send, Plus, Image as ImageIcon, FileText, User, Bot, Trash2, Paperclip, MessageSquare, ChevronDown, ChevronUp, Brain, Sparkles, Cpu, Upload, Square, RotateCw, Copy } from "lucide-react";
 import remarkGfm from "remark-gfm";
 import { motion, AnimatePresence } from "framer-motion";
+
+const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false });
+const CodeBlock = dynamic(() => import("../components/CodeBlock").then(mod => mod.CodeBlock), {
+    ssr: false,
+    loading: () => <div className="h-20 w-full animate-pulse bg-gray-100 dark:bg-gray-800 rounded-lg my-4" />
+});
 
 type Message = {
     id: string;
@@ -113,7 +119,7 @@ export default function ChatPage() {
     const [tempKey, setTempKey] = useState("");
     const abortControllerRef = useRef<AbortController | null>(null);
 
-    // Initial API Key & Language check
+    // Initial Config Load & Balance Check
     useEffect(() => {
         const savedKey = localStorage.getItem("pollinations_api_key");
         const savedLang = localStorage.getItem("app_language") as "en" | "es";
@@ -124,35 +130,13 @@ export default function ChatPage() {
             setShowApiKeyModal(true);
         }
 
-        if (savedLang) {
-            setLanguage(savedLang);
-        }
-    }, []);
-    // Load chats from Server on mount
-    useEffect(() => {
-        if (!userApiKey) return;
-
-        const fetchChats = async () => {
-            try {
-                const response = await fetch("/api/chat", {
-                    headers: { "x-api-key": userApiKey }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    setChats(data);
-                    if (data.length > 0) {
-                        setCurrentChatId(data[0].id);
-                    }
-                }
-            } catch (error) {
-                console.error("Error fetching chats from server:", error);
-            }
-        };
+        if (savedLang) setLanguage(savedLang);
 
         const fetchBalance = async () => {
+            if (!savedKey) return;
             try {
                 const res = await fetch("/api/balance", {
-                    headers: { "x-api-key": userApiKey }
+                    headers: { "x-api-key": savedKey }
                 });
                 if (res.ok) {
                     const data = await res.json();
@@ -163,9 +147,27 @@ export default function ChatPage() {
             }
         };
 
-        fetchChats();
         fetchBalance();
-    }, [userApiKey]);
+
+        // Load chats from LocalStorage
+        const savedChats = localStorage.getItem("polli_chats");
+        if (savedChats) {
+            try {
+                const parsed = JSON.parse(savedChats);
+                setChats(parsed);
+                if (parsed.length > 0) {
+                    setCurrentChatId(parsed[0].id);
+                }
+            } catch (e) { console.error("Failed to parse chats", e); }
+        }
+    }, []);
+
+    // Save chats to LocalStorage listener
+    useEffect(() => {
+        if (chats.length >= 0) { // Always save, even if empty
+            localStorage.setItem("polli_chats", JSON.stringify(chats));
+        }
+    }, [chats]);
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -212,24 +214,12 @@ export default function ChatPage() {
         e.stopPropagation();
         if (!confirm(t.deleteConfirm)) return;
 
-        try {
-            await fetch("/api/chat", {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-api-key": userApiKey || ""
-                },
-                body: JSON.stringify({ chatId: id })
-            });
-
-            const updated = chats.filter(c => c.id !== id);
-            setChats(updated);
-            if (currentChatId === id) {
-                setCurrentChatId(updated.length > 0 ? updated[0].id : null);
-            }
-        } catch (error) {
-            console.error("Error deleting chat:", error);
+        const updated = chats.filter(c => c.id !== id);
+        setChats(updated);
+        if (currentChatId === id) {
+            setCurrentChatId(updated.length > 0 ? updated[0].id : null);
         }
+        // LocalStorage update handled by useEffect
     };
 
     const processFiles = (files: FileList | File[]) => {
@@ -523,29 +513,36 @@ export default function ChatPage() {
                         <Trash2 size={16} />
                         <span>{t.logoutBtn}</span>
                     </button>
+
+                    <div className="pt-3 mt-1 border-t dark:border-gray-800 flex flex-col items-center gap-1">
+                        <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest opacity-60">POWERED BY</span>
+                        <a href="https://pollinations.ai" target="_blank" rel="noopener noreferrer" className="opacity-70 hover:opacity-100 transition-opacity">
+                            <img src="https://raw.githubusercontent.com/pollinations/pollinations/main/assets/logo.svg" alt="Pollinations" className="h-8 invert dark:invert-0" />
+                        </a>
+                    </div>
                 </div>
             </div>
 
             {/* Main Chat */}
             <div className="flex-1 flex flex-col relative overflow-hidden bg-claude-bg">
                 {/* Header */}
-                <header className="h-14 flex items-center justify-between px-6 border-b dark:border-gray-800 bg-claude-bg/80 backdrop-blur-md z-20 shrink-0">
-                    <div className="flex items-center gap-3">
-                        <span className="font-black text-claude-accent tracking-tighter text-lg cursor-default">POLLI</span>
-                        <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-700"></div>
-                        <h1 className="font-semibold text-sm truncate max-w-[200px] md:max-w-md text-gray-600 dark:text-gray-300 mr-2">
-                            {currentChat?.title || (language === 'en' ? "New Conversation" : "Nueva Conversación")}
+                <header className="h-14 flex items-center justify-between px-4 md:px-6 border-b dark:border-gray-800 bg-claude-bg/80 backdrop-blur-md z-20 shrink-0">
+                    <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                        <span className="font-black text-claude-accent tracking-tighter text-lg cursor-default hidden xs:block">POLLI</span>
+                        <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-700 hidden xs:block"></div>
+                        <h1 className="font-semibold text-xs md:text-sm truncate max-w-[100px] md:max-w-md text-gray-600 dark:text-gray-300 mr-2">
+                            {currentChat?.title || (language === 'en' ? "New Session" : "Nueva Sesión")}
                         </h1>
 
                         {/* Model Dropdown */}
-                        <div className="relative">
+                        <div className="relative shrink-0">
                             <button
                                 onClick={() => setIsModelMenuOpen(!isModelMenuOpen)}
-                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-xs font-bold"
+                                className="flex items-center gap-1.5 px-2 md:px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-xs font-bold"
                             >
                                 <selectedModel.icon size={14} className={selectedModel.color} />
-                                <span>{selectedModel.name}</span>
-                                <ChevronDown size={14} className={`transition-transform ${isModelMenuOpen ? "rotate-180" : ""}`} />
+                                <span className="max-w-[70px] md:max-w-none truncate">{selectedModel.name}</span>
+                                <ChevronDown size={12} className={`transition-transform duration-200 ${isModelMenuOpen ? "rotate-180" : ""}`} />
                             </button>
 
                             <AnimatePresence>
@@ -579,14 +576,14 @@ export default function ChatPage() {
                     </div>
 
                     {/* Pollen Balance Display */}
-                    <div className="flex items-center gap-2 pr-2">
+                    <div className="flex items-center gap-1 md:gap-2 pr-1 md:pr-2">
                         <div className="flex flex-col items-end">
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">{t.pollenBalance}</span>
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 shadow-sm group/balance transition-all hover:bg-orange-100 dark:hover:bg-orange-500/20">
-                                <span className="text-sm font-black text-orange-600 dark:text-orange-400">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1 hidden sm:block">{t.pollenBalance}</span>
+                            <div className="flex items-center gap-1.5 px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 shadow-sm group/balance transition-all hover:bg-orange-100 dark:hover:bg-orange-500/20">
+                                <span className="text-[11px] md:text-sm font-black text-orange-600 dark:text-orange-400">
                                     {pollenBalance !== null ? pollenBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "---"}
                                 </span>
-                                <Sparkles size={12} className="text-orange-500 animate-pulse" />
+                                <Sparkles size={11} className="text-orange-500 animate-pulse hidden xs:block" />
                             </div>
                         </div>
                         <button
@@ -604,7 +601,7 @@ export default function ChatPage() {
                                     setIsRefreshingBalance(false);
                                 }
                             }}
-                            className="p-2 mr-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-orange-500 transition-all active:scale-95 duration-200"
+                            className="p-1.5 md:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-orange-500 transition-all active:scale-95 duration-200"
                             title={t.updateBalance}
                         >
                             <RotateCw size={14} className={isRefreshingBalance ? "animate-spin text-orange-500" : ""} />
@@ -615,26 +612,34 @@ export default function ChatPage() {
                 {/* Messages Container */}
                 <div ref={scrollRef} className="flex-1 overflow-y-auto pt-8 pb-40 scroll-smooth">
                     {!currentChat || messages.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto px-6 animate-in fade-in zoom-in-95 duration-500">
-                            <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-3xl flex items-center justify-center mb-8 shadow-xl border border-gray-100 dark:border-gray-700">
-                                <selectedModel.icon size={34} className={selectedModel.color} />
+                        <div className="h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto px-6 animate-in fade-in zoom-in-95 duration-500 py-10">
+                            <div className="w-12 h-12 md:w-16 md:h-16 bg-white dark:bg-gray-800 rounded-3xl flex items-center justify-center mb-6 md:mb-8 shadow-xl border border-gray-100 dark:border-gray-700">
+                                <selectedModel.icon size={28} className={`${selectedModel.color} md:size-[34px]`} />
                             </div>
-                            <h2 className="text-4xl font-bold tracking-tight mb-3 text-gray-800 dark:text-gray-100">{t.helloMessage} {selectedModel.name}</h2>
-                            <p className="text-gray-500 text-lg max-w-md">{t.dropInstruction}</p>
+                            <h2 className="text-2xl md:text-4xl font-bold tracking-tight mb-3 text-gray-800 dark:text-gray-100">
+                                {language === 'en' ? `Querying ${selectedModel.name}` : `Consultando ${selectedModel.name}`}
+                            </h2>
+                            <p className="text-gray-500 text-sm md:text-lg max-w-md">{t.dropInstruction}</p>
                         </div>
                     ) : (
-                        <div className="max-w-3xl mx-auto space-y-6 px-6">
+                        <div className="max-w-4xl mx-auto flex flex-col gap-8 px-4 md:px-6">
                             {messages.map((m, index) => (
-                                <div key={m.id || `msg-${index}`} className="flex gap-4 md:gap-6 animate-in fade-in slide-in-from-bottom-3 duration-400">
-                                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-md ${m.role === "user" ? "bg-claude-accent text-white" : "bg-white dark:bg-gray-800 border dark:border-gray-700"}`}>
-                                        {m.role === "user" ? <User size={20} /> : <selectedModel.icon size={20} className={selectedModel.color} />}
+                                <div
+                                    key={m.id || `msg-${index}`}
+                                    className={`flex w-full gap-3 md:gap-4 animate-in fade-in slide-in-from-bottom-3 duration-400 ${m.role === "user" ? "flex-row-reverse" : ""}`}
+                                >
+                                    {/* Avatar */}
+                                    <div className={`w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm transition-all ${m.role === "user" ? "bg-claude-accent text-white" : "bg-white dark:bg-gray-800 border dark:border-gray-700"}`}>
+                                        {m.role === "user" ? <User size={18} /> : <selectedModel.icon size={18} className={selectedModel.color} />}
                                     </div>
-                                    <div className="flex-1 min-w-0">
+
+                                    {/* Content Wrapper */}
+                                    <div className={`flex-1 min-w-0 flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
                                         {m.role === "assistant" && m.reasoning && (
-                                            <div className="mb-4">
+                                            <div className="mb-2 max-w-full">
                                                 <button
                                                     onClick={() => toggleReasoning(m.id)}
-                                                    className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-claude-accent transition-colors mb-2 group"
+                                                    className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-claude-accent transition-colors mb-1 group"
                                                 >
                                                     <Brain size={14} className="group-hover:rotate-12 transition-transform" />
                                                     <span>{showReasoning[m.id] ? t.hideReasoning : t.seeReasoning}</span>
@@ -657,9 +662,59 @@ export default function ChatPage() {
                                             </div>
                                         )}
 
-                                        <div className={`leading-relaxed text-[16px] ${m.role === "user" ? "bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm" : "text-gray-800 dark:text-gray-200"}`}>
-                                            <div className="markdown-content prose dark:prose-invert max-w-none">
-                                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        <div
+                                            id={`msg-${m.id}`}
+                                            className={`relative group/msg transition-all duration-300 w-full ${m.role === "user"
+                                                ? "bg-white dark:bg-gray-800 p-4 md:p-5 rounded-2xl md:rounded-3xl rounded-tr-none border border-gray-100 dark:border-gray-700 shadow-sm text-gray-800 dark:text-gray-100 ml-auto w-fit"
+                                                : "bg-gray-50/50 dark:bg-white/[0.03] p-4 md:p-5 rounded-2xl md:rounded-3xl rounded-tl-none border border-gray-100/50 dark:border-gray-800/50 text-gray-800 dark:text-gray-200"
+                                                }`}
+                                        >
+                                            {/* Floating Copy Actions */}
+                                            <div className={`absolute -top-3 ${m.role === "user" ? "left-0" : "right-0"} opacity-0 translate-y-1 group-hover/msg:opacity-100 group-hover/msg:translate-y-0 transition-all duration-200 z-10 hidden md:block`}>
+                                                <div className="flex items-center gap-0.5 p-1 rounded-lg bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-gray-200 dark:border-gray-800 shadow-xl">
+                                                    <button
+                                                        onClick={() => navigator.clipboard.writeText(typeof m.content === "string" ? m.content : "")}
+                                                        className="h-7 px-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-claude-accent transition-all flex items-center gap-1.5 text-[10px] font-bold"
+                                                        title="Copy Markdown"
+                                                    >
+                                                        <Copy size={12} />
+                                                        <span>MD</span>
+                                                    </button>
+                                                    <div className="w-[1px] h-3 bg-gray-200 dark:bg-gray-800 mx-0.5"></div>
+                                                    <button
+                                                        onClick={() => {
+                                                            const el = document.getElementById(`msg-${m.id}`);
+                                                            if (el) navigator.clipboard.writeText(el.innerText);
+                                                        }}
+                                                        className="h-7 px-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-claude-accent transition-all flex items-center gap-1.5 text-[10px] font-bold"
+                                                        title="Copy Text"
+                                                    >
+                                                        <FileText size={12} />
+                                                        <span>TXT</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="markdown-content prose dark:prose-invert max-w-none break-words leading-relaxed text-[15px] md:text-[16px] text-left w-full">
+                                                <ReactMarkdown
+                                                    remarkPlugins={[remarkGfm]}
+                                                    components={{
+                                                        code({ node, inline, className, children, ...props }: any) {
+                                                            const match = /language-(\w+)/.exec(className || "");
+                                                            return !inline && match ? (
+                                                                <CodeBlock
+                                                                    language={match[1]}
+                                                                    value={String(children).replace(/\n$/, "")}
+                                                                    {...props}
+                                                                />
+                                                            ) : (
+                                                                <code className={className} {...props}>
+                                                                    {children}
+                                                                </code>
+                                                            );
+                                                        }
+                                                    }}
+                                                >
                                                     {typeof m.content === "string"
                                                         ? m.content
                                                         : (Array.isArray(m.content) as any)
@@ -667,12 +722,13 @@ export default function ChatPage() {
                                                             : ""}
                                                 </ReactMarkdown>
                                             </div>
+
                                             {m.files && m.files.length > 0 && (
-                                                <div className="flex flex-wrap gap-2 mt-5 pt-4 border-t border-gray-50 dark:border-gray-700/50">
+                                                <div className={`flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100 dark:border-gray-800/50 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                                                     {m.files.map((f, i) => (
-                                                        <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 text-[12px] font-bold text-gray-600 dark:text-gray-400 shadow-sm">
+                                                        <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-[11px] font-bold text-gray-600 dark:text-gray-400 group/file cursor-default shadow-sm sm:max-w-[200px]">
                                                             {f.type === "image" ? <ImageIcon size={14} className="text-claude-accent" /> : <FileText size={14} className="text-blue-500" />}
-                                                            <span className="truncate max-w-[180px]">{f.name}</span>
+                                                            <span className="truncate">{f.name}</span>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -680,7 +736,8 @@ export default function ChatPage() {
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                            ))
+                            }
                             {isLoading && (
                                 <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
                                     <div className="flex gap-4 md:gap-6">
@@ -706,10 +763,10 @@ export default function ChatPage() {
                 </div>
 
                 {/* Fixed Input area at bottom */}
-                <div className="absolute bottom-0 left-0 right-0 px-6 pb-8 pt-4 bg-gradient-to-t from-claude-bg via-claude-bg to-transparent z-10">
+                <div className="absolute bottom-0 left-0 right-0 px-4 md:px-6 pb-6 md:pb-8 pt-4 bg-gradient-to-t from-claude-bg via-claude-bg to-transparent z-10">
                     <div className="max-w-3xl mx-auto relative group">
-                        <div className="absolute -inset-1 bg-gradient-to-r from-claude-accent/20 to-orange-500/10 rounded-[28px] blur-lg opacity-0 group-focus-within:opacity-100 transition duration-700"></div>
-                        <div className="relative bg-white dark:bg-[#141414] rounded-[24px] border-2 border-gray-100 dark:border-gray-800 shadow-2xl transition-all duration-300 group-focus-within:border-claude-accent/40 dark:group-focus-within:border-claude-accent/20">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-claude-accent/30 to-orange-500/20 rounded-[28px] md:rounded-[36px] blur-xl opacity-0 group-focus-within:opacity-100 transition duration-700"></div>
+                        <div className="relative bg-white dark:bg-[#141414] rounded-2xl md:rounded-[32px] border-2 border-gray-100 dark:border-gray-800 shadow-2xl transition-all duration-300 group-focus-within:border-claude-accent/30 dark:group-focus-within:border-claude-accent/20">
 
                             {/* Attached Files Preview */}
                             <AnimatePresence>
@@ -718,10 +775,10 @@ export default function ChatPage() {
                                         initial={{ height: 0, opacity: 0 }}
                                         animate={{ height: "auto", opacity: 1 }}
                                         exit={{ height: 0, opacity: 0 }}
-                                        className="flex gap-3 p-4 border-b border-gray-50 dark:border-gray-800 overflow-x-auto"
+                                        className="flex gap-2 p-3 pb-0 border-b border-gray-50 dark:border-gray-800 overflow-x-auto"
                                     >
                                         {attachedFiles.map((file, i) => (
-                                            <div key={i} className="relative group/file shrink-0 w-20 h-20 rounded-2xl overflow-hidden border-2 border-gray-50 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 shadow-sm transition-transform hover:scale-105">
+                                            <div key={i} className="relative group/file shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 border-gray-50 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 shadow-sm transition-transform hover:scale-103">
                                                 {file.type === "image" ? (
                                                     <img src={file.preview} alt="preview" className="w-full h-full object-cover" />
                                                 ) : (
@@ -742,10 +799,10 @@ export default function ChatPage() {
                                 )}
                             </AnimatePresence>
 
-                            <div className="flex items-end p-2.5 gap-2">
+                            <div className="flex items-end p-2 md:p-3 gap-1 md:gap-2">
                                 <button
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="p-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-2xl transition-all shrink-0 text-gray-400 hover:text-claude-accent group/btn"
+                                    className="p-2.5 md:p-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-xl md:rounded-2xl transition-all shrink-0 text-gray-400 hover:text-claude-accent group/btn"
                                     title="Adjuntar archivos"
                                 >
                                     <Paperclip size={22} className="group-hover/btn:rotate-12 transition-transform" />
@@ -768,31 +825,33 @@ export default function ChatPage() {
                                         }
                                     }}
                                     placeholder={t.placeholder.replace("{model}", selectedModel.name)}
-                                    className="flex-1 bg-transparent border-none focus:ring-0 resize-none py-3.5 px-1 text-[16px] leading-relaxed min-h-[60px] max-h-[220px] placeholder-gray-400 font-medium"
+                                    className="flex-1 bg-transparent border-none focus:ring-0 resize-none py-2.5 md:py-3.5 px-1 text-[16px] leading-relaxed min-h-[48px] md:min-h-[60px] max-h-[220px] placeholder-gray-400 font-medium"
                                     rows={1}
                                     style={{ height: 'auto' }}
                                 />
                                 {isLoading ? (
                                     <button
                                         onClick={handleStop}
-                                        className="p-3.5 rounded-2xl transition-all shrink-0 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-red-500 hover:text-white group"
+                                        className="p-2.5 md:p-3.5 rounded-xl md:rounded-2xl transition-all shrink-0 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-red-500 hover:text-white group"
                                         title={t.stopGeneration}
                                     >
-                                        <Square size={22} className="fill-current group-hover:fill-white" />
+                                        <Square size={20} className="fill-current group-hover:fill-white md:size-[22px]" />
                                     </button>
                                 ) : (
                                     <button
                                         onClick={handleSend}
                                         disabled={isLoading || (!input.trim() && attachedFiles.length === 0)}
-                                        className={`p-3.5 rounded-2xl transition-all shrink-0 shadow-sm ${input.trim() || attachedFiles.length > 0 ? "bg-claude-accent text-white hover:bg-claude-accent/90 hover:shadow-lg hover:shadow-claude-accent/20 active:scale-95" : "bg-gray-50 dark:bg-gray-800 text-gray-300 cursor-not-allowed"}`}
+                                        className={`p-2.5 md:p-3.5 rounded-xl md:rounded-2xl transition-all shrink-0 shadow-sm ${input.trim() || attachedFiles.length > 0 ? "bg-claude-accent text-white hover:bg-claude-accent/90 hover:shadow-lg hover:shadow-claude-accent/20 active:scale-95" : "bg-gray-50 dark:bg-gray-800 text-gray-300 cursor-not-allowed"}`}
                                     >
-                                        <Send size={22} className={input.trim() || attachedFiles.length > 0 ? "fill-white/20" : ""} />
+                                        <Send size={20} className={`${input.trim() || attachedFiles.length > 0 ? "fill-white/20" : ""} md:size-[22px]`} />
                                     </button>
                                 )}
                             </div>
                         </div>
                         <div className="text-center mt-4">
-                            <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest opacity-60">AI Client with Polli • Pollinations API</span>
+                            <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest opacity-60">
+                                AI Client with Polli • <a href="https://pollinations.ai" target="_blank" rel="noopener noreferrer" className="hover:text-claude-accent transition-colors">Powered by Pollinations.ai</a>
+                            </span>
                         </div>
                     </div>
                 </div>
