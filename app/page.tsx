@@ -532,7 +532,7 @@ export default function ChatPage() {
             </div>
 
             {/* Main Chat */}
-            <div className="flex-1 flex flex-col relative overflow-hidden bg-claude-bg">
+            <main className="flex-1 flex flex-col relative overflow-hidden bg-claude-bg">
                 {/* Header */}
                 <header className="h-14 flex items-center justify-between px-4 md:px-6 border-b border-white/[0.04] bg-claude-bg/80 backdrop-blur-xl z-20 shrink-0">
                     <div className="flex items-center gap-2 md:gap-3 min-w-0">
@@ -851,7 +851,7 @@ export default function ChatPage() {
                     </motion.div>
 
                 </div>
-            </div>
+            </main>
 
             {/* API Key Modal Overlay */}
             <AnimatePresence>
@@ -917,6 +917,6 @@ export default function ChatPage() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </div >
     );
 }
