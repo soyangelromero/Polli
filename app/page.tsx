@@ -154,10 +154,19 @@ export default function ChatPage() {
         const savedChats = localStorage.getItem("polli_chats");
         if (savedChats) {
             try {
-                const parsed = JSON.parse(savedChats);
-                setChats(parsed);
-                if (parsed.length > 0) {
-                    setCurrentChatId(parsed[0].id);
+                const parsed: Chat[] = JSON.parse(savedChats);
+                // Migration: Ensure all old assistant messages have a fixed modelId
+                const migrated = parsed.map(chat => ({
+                    ...chat,
+                    messages: chat.messages.map(m =>
+                        (m.role === "assistant" && !m.modelId)
+                            ? { ...m, modelId: chat.model }
+                            : m
+                    )
+                }));
+                setChats(migrated);
+                if (migrated.length > 0) {
+                    setCurrentChatId(migrated[0].id);
                 }
             } catch (e) { console.error("Failed to parse chats", e); }
         }
