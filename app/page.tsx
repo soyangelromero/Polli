@@ -17,6 +17,7 @@ type Message = {
     role: "user" | "assistant";
     content: string | any[];
     reasoning?: string;
+    modelId?: string;
     files?: { name: string; type: string; url?: string }[];
 };
 
@@ -367,7 +368,8 @@ export default function ChatPage() {
                 id: (Date.now() + 1).toString(),
                 role: "assistant",
                 content: data.content || "Lo siento, hubo un error.",
-                reasoning: data.reasoning || undefined
+                reasoning: data.reasoning || undefined,
+                modelId: chatModel
             };
 
             const finalChats = [...updatedChats];
@@ -631,7 +633,14 @@ export default function ChatPage() {
                                 >
                                     {/* Avatar - IA o Usuario */}
                                     <div className={`w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center shrink-0 shadow-sm border dark:border-white/10 ${m.role === "user" ? "bg-claude-accent text-white" : "bg-white dark:bg-gray-800"}`}>
-                                        {m.role === "user" ? <User size={18} /> : <selectedModel.icon size={18} className={selectedModel.color} />}
+                                        {m.role === "user" ? (
+                                            <User size={18} />
+                                        ) : (
+                                            (() => {
+                                                const msgModel = MODELS.find(mod => mod.id === m.modelId) || selectedModel;
+                                                return <msgModel.icon size={18} className={msgModel.color} />;
+                                            })()
+                                        )}
                                     </div>
 
                                     <div className={`flex-1 min-w-0 flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
