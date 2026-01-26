@@ -443,7 +443,7 @@ export default function ChatPage() {
             </AnimatePresence>
 
             {/* Sidebar */}
-            <div className="w-72 bg-claude-sidebar/70 backdrop-blur-3xl hidden md:flex flex-col border-r border-black/5 dark:border-white/5 transition-all z-30">
+            <div className="w-72 bg-claude-sidebar/80 backdrop-blur-xl hidden md:flex flex-col border-r border-white/[0.04] transition-all z-30">
                 <div className="p-4">
                     <button
                         onClick={createNewChat}
@@ -534,9 +534,9 @@ export default function ChatPage() {
             {/* Main Chat */}
             <div className="flex-1 flex flex-col relative overflow-hidden bg-claude-bg">
                 {/* Header */}
-                <header className="h-14 flex items-center justify-between px-4 md:px-6 border-b border-black/5 dark:border-white/5 bg-claude-bg/60 backdrop-blur-2xl z-20 shrink-0">
+                <header className="h-14 flex items-center justify-between px-4 md:px-6 border-b border-white/[0.04] bg-claude-bg/80 backdrop-blur-xl z-20 shrink-0">
                     <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                        <span className="font-black text-claude-accent tracking-tighter text-lg cursor-default hidden xs:block">POLLI</span>
+                        <span className="font-semibold text-claude-accent tracking-tight text-base cursor-default hidden xs:block">POLLI</span>
                         <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-700 hidden xs:block"></div>
                         <h1 className="font-semibold text-xs md:text-sm truncate max-w-[100px] md:max-w-md text-gray-600 dark:text-gray-300 mr-2">
                             {currentChat?.title || (language === 'en' ? "New Session" : "Nueva Sesión")}
@@ -755,7 +755,7 @@ export default function ChatPage() {
                         className="max-w-4xl mx-auto relative pointer-events-auto"
                     >
                         {/* Minimalist Glass Container - Floating */}
-                        <div className="relative bg-white/70 dark:bg-white/[0.05] backdrop-blur-2xl rounded-[32px] border border-black/[0.08] dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] transition-all duration-500 group-focus-within:shadow-claude-accent/5">
+                        <div className="relative bg-white/80 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-black/[0.06] dark:border-white/[0.06] shadow-lg dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] transition-all duration-300">
 
                             {/* Attached Files Preview */}
                             <AnimatePresence>
@@ -815,7 +815,7 @@ export default function ChatPage() {
                                         }
                                     }}
                                     placeholder={t.placeholder.replace("{model}", selectedModel.name)}
-                                    className="flex-1 bg-transparent border-none focus:ring-0 resize-none py-3 px-1 text-[16px] md:text-[17px] leading-relaxed min-h-[48px] max-h-[250px] placeholder-gray-400 dark:placeholder-gray-500 font-medium scrollbar-hide text-gray-800 dark:text-gray-100 selection:bg-claude-accent/30"
+                                    className="flex-1 bg-transparent border-none outline-none focus:ring-0 focus:outline-none resize-none py-3 px-1 text-[15px] md:text-base leading-relaxed min-h-[48px] max-h-[250px] placeholder-gray-400 dark:placeholder-gray-500 font-normal scrollbar-hide text-gray-800 dark:text-gray-100 selection:bg-claude-accent/30"
                                     rows={1}
                                     style={{ height: 'auto' }}
                                 />

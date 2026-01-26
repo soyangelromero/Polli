@@ -62,30 +62,30 @@
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --card: #0a0a0a;
-  --card-foreground: #ededed;
-  --popover: #0a0a0a;
-  --popover-foreground: #ededed;
-  --primary: #ededed;
-  --primary-foreground: #0a0a0a;
-  --secondary: #1f2937;
-  --secondary-foreground: #ededed;
-  --muted: #1f2937;
-  --muted-foreground: #9ca3af;
-  --accent: #1f2937;
-  --accent-foreground: #ededed;
+  --background: #0c0c0c;
+  --foreground: #e5e5e5;
+  --card: #0c0c0c;
+  --card-foreground: #e5e5e5;
+  --popover: #0c0c0c;
+  --popover-foreground: #e5e5e5;
+  --primary: #e5e5e5;
+  --primary-foreground: #0c0c0c;
+  --secondary: #1a1a1a;
+  --secondary-foreground: #e5e5e5;
+  --muted: #1a1a1a;
+  --muted-foreground: #a3a3a3;
+  --accent: #1a1a1a;
+  --accent-foreground: #e5e5e5;
   --destructive: #7f1d1d;
-  --destructive-foreground: #ededed;
-  --border: #1f2937;
-  --input: #1f2937;
-  --ring: #d1d5db;
+  --destructive-foreground: #e5e5e5;
+  --border: #262626;
+  --input: #262626;
+  --ring: #a3a3a3;
 
-  --claude-bg: #050505;
-  --claude-sidebar: #0a0a0a;
+  --claude-bg: #0a0a0a;
+  --claude-sidebar: #111111;
   --claude-user-msg: #1a1a1a;
-  --claude-ai-msg: #050505;
+  --claude-ai-msg: #0a0a0a;
 }
 
 @layer base {
