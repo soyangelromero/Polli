@@ -510,6 +510,13 @@ export default function ChatPage() {
                         <Trash2 size={16} />
                         <span>{t.logoutBtn}</span>
                     </button>
+                    <div className="pt-4 flex justify-center opacity-40 hover:opacity-100 transition-opacity">
+                        <img
+                            src="https://raw.githubusercontent.com/pollinations/pollinations/main/assets/logo.svg"
+                            alt="Pollinations Logo"
+                            className="h-6 w-auto invert dark:invert-0 brightness-200"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -518,11 +525,7 @@ export default function ChatPage() {
                 {/* Header */}
                 <header className="h-14 flex items-center justify-between px-4 md:px-6 border-b dark:border-gray-800 bg-claude-bg/80 backdrop-blur-md z-20 shrink-0">
                     <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                        <img
-                            src="https://raw.githubusercontent.com/pollinations/pollinations/main/assets/logo.svg"
-                            alt="Pollinations Logo"
-                            className="h-8 w-auto invert dark:invert-0 brightness-200"
-                        />
+                        <span className="font-black text-claude-accent tracking-tighter text-lg cursor-default hidden xs:block">POLLI</span>
                         <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-700 hidden xs:block"></div>
                         <h1 className="font-semibold text-xs md:text-sm truncate max-w-[100px] md:max-w-md text-gray-600 dark:text-gray-300 mr-2">
                             {currentChat?.title || (language === 'en' ? "New Session" : "Nueva Sesión")}
@@ -622,12 +625,10 @@ export default function ChatPage() {
                                     key={m.id || `msg-${index}`}
                                     className={`flex w-full gap-3 md:gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 ${m.role === "user" ? "flex-reverse" : ""}`}
                                 >
-                                    {/* Avatar - Solo para IA en diseño minimalista similar a ChatGPT */}
-                                    {m.role === "assistant" && (
-                                        <div className={`w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center shrink-0 shadow-sm border dark:border-white/10 bg-white dark:bg-gray-800`}>
-                                            <selectedModel.icon size={18} className={selectedModel.color} />
-                                        </div>
-                                    )}
+                                    {/* Avatar - IA o Usuario */}
+                                    <div className={`w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center shrink-0 shadow-sm border dark:border-white/10 ${m.role === "user" ? "bg-claude-accent text-white" : "bg-white dark:bg-gray-800"}`}>
+                                        {m.role === "user" ? <User size={18} /> : <selectedModel.icon size={18} className={selectedModel.color} />}
+                                    </div>
 
                                     <div className={`flex-1 min-w-0 flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
                                         <div
