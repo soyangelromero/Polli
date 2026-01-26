@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Plus, Image as ImageIcon, FileText, User, Bot, Trash2, Paperclip, MessageSquare, ChevronDown, ChevronUp, Brain, Sparkles, Cpu, Upload, Square, RotateCw } from "lucide-react";
+import { Send, Plus, Image as ImageIcon, FileText, User, Bot, Trash2, Paperclip, MessageSquare, ChevronDown, ChevronUp, Brain, Sparkles, Cpu, Upload, Square, RotateCw, Copy } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { motion, AnimatePresence } from "framer-motion";
+import { CodeBlock } from "../components/CodeBlock";
 
 type Message = {
     id: string;
@@ -113,7 +114,7 @@ export default function ChatPage() {
     const [tempKey, setTempKey] = useState("");
     const abortControllerRef = useRef<AbortController | null>(null);
 
-    // Initial API Key & Language check
+    // Initial Config Load & Balance Check
     useEffect(() => {
         const savedKey = localStorage.getItem("pollinations_api_key");
         const savedLang = localStorage.getItem("app_language") as "en" | "es";
@@ -124,35 +125,13 @@ export default function ChatPage() {
             setShowApiKeyModal(true);
         }
 
-        if (savedLang) {
-            setLanguage(savedLang);
-        }
-    }, []);
-    // Load chats from Server on mount
-    useEffect(() => {
-        if (!userApiKey) return;
-
-        const fetchChats = async () => {
-            try {
-                const response = await fetch("/api/chat", {
-                    headers: { "x-api-key": userApiKey }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    setChats(data);
-                    if (data.length > 0) {
-                        setCurrentChatId(data[0].id);
-                    }
-                }
-            } catch (error) {
-                console.error("Error fetching chats from server:", error);
-            }
-        };
+        if (savedLang) setLanguage(savedLang);
 
         const fetchBalance = async () => {
+            if (!savedKey) return;
             try {
                 const res = await fetch("/api/balance", {
-                    headers: { "x-api-key": userApiKey }
+                    headers: { "x-api-key": savedKey }
                 });
                 if (res.ok) {
                     const data = await res.json();
@@ -163,9 +142,27 @@ export default function ChatPage() {
             }
         };
 
-        fetchChats();
         fetchBalance();
-    }, [userApiKey]);
+
+        // Load chats from LocalStorage
+        const savedChats = localStorage.getItem("polli_chats");
+        if (savedChats) {
+            try {
+                const parsed = JSON.parse(savedChats);
+                setChats(parsed);
+                if (parsed.length > 0) {
+                    setCurrentChatId(parsed[0].id);
+                }
+            } catch (e) { console.error("Failed to parse chats", e); }
+        }
+    }, []);
+
+    // Save chats to LocalStorage listener
+    useEffect(() => {
+        if (chats.length >= 0) { // Always save, even if empty
+            localStorage.setItem("polli_chats", JSON.stringify(chats));
+        }
+    }, [chats]);
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -212,24 +209,12 @@ export default function ChatPage() {
         e.stopPropagation();
         if (!confirm(t.deleteConfirm)) return;
 
-        try {
-            await fetch("/api/chat", {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-api-key": userApiKey || ""
-                },
-                body: JSON.stringify({ chatId: id })
-            });
-
-            const updated = chats.filter(c => c.id !== id);
-            setChats(updated);
-            if (currentChatId === id) {
-                setCurrentChatId(updated.length > 0 ? updated[0].id : null);
-            }
-        } catch (error) {
-            console.error("Error deleting chat:", error);
+        const updated = chats.filter(c => c.id !== id);
+        setChats(updated);
+        if (currentChatId === id) {
+            setCurrentChatId(updated.length > 0 ? updated[0].id : null);
         }
+        // LocalStorage update handled by useEffect
     };
 
     const processFiles = (files: FileList | File[]) => {
@@ -523,6 +508,13 @@ export default function ChatPage() {
                         <Trash2 size={16} />
                         <span>{t.logoutBtn}</span>
                     </button>
+
+                    <div className="pt-3 mt-1 border-t dark:border-gray-800 flex flex-col items-center gap-1">
+                        <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest opacity-60">POWERED BY</span>
+                        <a href="https://pollinations.ai" target="_blank" rel="noopener noreferrer" className="opacity-70 hover:opacity-100 transition-opacity">
+                            <img src="https://raw.githubusercontent.com/pollinations/pollinations/main/assets/logo.svg" alt="Pollinations" className="h-8 invert dark:invert-0" />
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -623,18 +615,24 @@ export default function ChatPage() {
                             <p className="text-gray-500 text-lg max-w-md">{t.dropInstruction}</p>
                         </div>
                     ) : (
-                        <div className="max-w-3xl mx-auto space-y-6 px-6">
+                        <div className="max-w-4xl mx-auto flex flex-col gap-8 px-4 md:px-6">
                             {messages.map((m, index) => (
-                                <div key={m.id || `msg-${index}`} className="flex gap-4 md:gap-6 animate-in fade-in slide-in-from-bottom-3 duration-400">
-                                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-md ${m.role === "user" ? "bg-claude-accent text-white" : "bg-white dark:bg-gray-800 border dark:border-gray-700"}`}>
-                                        {m.role === "user" ? <User size={20} /> : <selectedModel.icon size={20} className={selectedModel.color} />}
+                                <div
+                                    key={m.id || `msg-${index}`}
+                                    className={`flex w-full gap-3 md:gap-4 animate-in fade-in slide-in-from-bottom-3 duration-400 ${m.role === "user" ? "flex-row-reverse" : ""}`}
+                                >
+                                    {/* Avatar */}
+                                    <div className={`w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm transition-all ${m.role === "user" ? "bg-claude-accent text-white" : "bg-white dark:bg-gray-800 border dark:border-gray-700"}`}>
+                                        {m.role === "user" ? <User size={18} /> : <selectedModel.icon size={18} className={selectedModel.color} />}
                                     </div>
-                                    <div className="flex-1 min-w-0">
+
+                                    {/* Content Wrapper */}
+                                    <div className={`flex-1 min-w-0 flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
                                         {m.role === "assistant" && m.reasoning && (
-                                            <div className="mb-4">
+                                            <div className="mb-2 max-w-full">
                                                 <button
                                                     onClick={() => toggleReasoning(m.id)}
-                                                    className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-claude-accent transition-colors mb-2 group"
+                                                    className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-claude-accent transition-colors mb-1 group"
                                                 >
                                                     <Brain size={14} className="group-hover:rotate-12 transition-transform" />
                                                     <span>{showReasoning[m.id] ? t.hideReasoning : t.seeReasoning}</span>
@@ -657,9 +655,59 @@ export default function ChatPage() {
                                             </div>
                                         )}
 
-                                        <div className={`leading-relaxed text-[16px] ${m.role === "user" ? "bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm" : "text-gray-800 dark:text-gray-200"}`}>
-                                            <div className="markdown-content prose dark:prose-invert max-w-none">
-                                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        <div
+                                            id={`msg-${m.id}`}
+                                            className={`relative group/msg transition-all duration-300 w-fit max-w-full ${m.role === "user"
+                                                ? "bg-white dark:bg-gray-800 p-4 md:p-5 rounded-2xl rounded-tr-none border border-gray-100 dark:border-gray-700 shadow-sm text-gray-800 dark:text-gray-100"
+                                                : "text-gray-800 dark:text-gray-200 py-1"
+                                                }`}
+                                        >
+                                            {/* Floating Copy Actions */}
+                                            <div className={`absolute -top-3 ${m.role === "user" ? "left-0" : "right-0"} opacity-0 translate-y-1 group-hover/msg:opacity-100 group-hover/msg:translate-y-0 transition-all duration-200 z-10 hidden md:block`}>
+                                                <div className="flex items-center gap-0.5 p-1 rounded-lg bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-gray-200 dark:border-gray-800 shadow-xl">
+                                                    <button
+                                                        onClick={() => navigator.clipboard.writeText(typeof m.content === "string" ? m.content : "")}
+                                                        className="h-7 px-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-claude-accent transition-all flex items-center gap-1.5 text-[10px] font-bold"
+                                                        title="Copy Markdown"
+                                                    >
+                                                        <Copy size={12} />
+                                                        <span>MD</span>
+                                                    </button>
+                                                    <div className="w-[1px] h-3 bg-gray-200 dark:bg-gray-800 mx-0.5"></div>
+                                                    <button
+                                                        onClick={() => {
+                                                            const el = document.getElementById(`msg-${m.id}`);
+                                                            if (el) navigator.clipboard.writeText(el.innerText);
+                                                        }}
+                                                        className="h-7 px-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-claude-accent transition-all flex items-center gap-1.5 text-[10px] font-bold"
+                                                        title="Copy Text"
+                                                    >
+                                                        <FileText size={12} />
+                                                        <span>TXT</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="markdown-content prose dark:prose-invert max-w-none break-words leading-relaxed text-[15px] md:text-[16px] text-left">
+                                                <ReactMarkdown
+                                                    remarkPlugins={[remarkGfm]}
+                                                    components={{
+                                                        code({ node, inline, className, children, ...props }: any) {
+                                                            const match = /language-(\w+)/.exec(className || "");
+                                                            return !inline && match ? (
+                                                                <CodeBlock
+                                                                    language={match[1]}
+                                                                    value={String(children).replace(/\n$/, "")}
+                                                                    {...props}
+                                                                />
+                                                            ) : (
+                                                                <code className={className} {...props}>
+                                                                    {children}
+                                                                </code>
+                                                            );
+                                                        }
+                                                    }}
+                                                >
                                                     {typeof m.content === "string"
                                                         ? m.content
                                                         : (Array.isArray(m.content) as any)
@@ -667,12 +715,13 @@ export default function ChatPage() {
                                                             : ""}
                                                 </ReactMarkdown>
                                             </div>
+
                                             {m.files && m.files.length > 0 && (
-                                                <div className="flex flex-wrap gap-2 mt-5 pt-4 border-t border-gray-50 dark:border-gray-700/50">
+                                                <div className={`flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100 dark:border-gray-800/50 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                                                     {m.files.map((f, i) => (
-                                                        <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 text-[12px] font-bold text-gray-600 dark:text-gray-400 shadow-sm">
+                                                        <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-[11px] font-bold text-gray-600 dark:text-gray-400 group/file cursor-default shadow-sm sm:max-w-[200px]">
                                                             {f.type === "image" ? <ImageIcon size={14} className="text-claude-accent" /> : <FileText size={14} className="text-blue-500" />}
-                                                            <span className="truncate max-w-[180px]">{f.name}</span>
+                                                            <span className="truncate">{f.name}</span>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -680,7 +729,8 @@ export default function ChatPage() {
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                            ))
+                            }
                             {isLoading && (
                                 <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
                                     <div className="flex gap-4 md:gap-6">
@@ -792,7 +842,9 @@ export default function ChatPage() {
                             </div>
                         </div>
                         <div className="text-center mt-4">
-                            <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest opacity-60">AI Client with Polli • Pollinations API</span>
+                            <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest opacity-60">
+                                AI Client with Polli • <a href="https://pollinations.ai" target="_blank" rel="noopener noreferrer" className="hover:text-claude-accent transition-colors">Powered by Pollinations.ai</a>
+                            </span>
                         </div>
                     </div>
                 </div>
