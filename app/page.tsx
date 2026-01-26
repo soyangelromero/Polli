@@ -763,10 +763,10 @@ export default function ChatPage() {
                 </div>
 
                 {/* Fixed Input area at bottom */}
-                <div className="absolute bottom-0 left-0 right-0 px-4 md:px-6 pb-6 md:pb-8 pt-4 bg-gradient-to-t from-claude-bg via-claude-bg to-transparent z-10">
+                <div className="absolute bottom-0 left-0 right-0 px-4 md:px-6 pb-6 md:pb-8 pt-4 bg-gradient-to-t from-claude-bg via-claude-bg/90 to-transparent z-10">
                     <div className="max-w-3xl mx-auto relative group">
-                        <div className="absolute -inset-1 bg-gradient-to-r from-claude-accent/20 to-orange-500/10 rounded-[28px] blur-lg opacity-0 group-focus-within:opacity-100 transition duration-700"></div>
-                        <div className="relative bg-white dark:bg-[#141414] rounded-[24px] border-2 border-gray-100 dark:border-gray-800 shadow-2xl transition-all duration-300 group-focus-within:border-claude-accent/40 dark:group-focus-within:border-claude-accent/20">
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-claude-accent/30 to-orange-500/20 rounded-[28px] blur-md opacity-0 group-focus-within:opacity-100 transition duration-700"></div>
+                        <div className="relative bg-white/80 dark:bg-[#141414]/80 backdrop-blur-xl rounded-[26px] border border-gray-200/50 dark:border-gray-700/50 shadow-2xl shadow-gray-200/20 dark:shadow-black/20 ring-1 ring-black/5 dark:ring-white/5 transition-all duration-300 group-focus-within:shadow-xl group-focus-within:ring-claude-accent/30 scale-100 origin-bottom">
 
                             {/* Attached Files Preview */}
                             <AnimatePresence>
@@ -775,23 +775,23 @@ export default function ChatPage() {
                                         initial={{ height: 0, opacity: 0 }}
                                         animate={{ height: "auto", opacity: 1 }}
                                         exit={{ height: 0, opacity: 0 }}
-                                        className="flex gap-2 p-3 pb-0 border-b border-gray-50 dark:border-gray-800 overflow-x-auto"
+                                        className="flex gap-2 p-3 pb-0 border-b border-gray-100/50 dark:border-gray-800/50 overflow-x-auto"
                                     >
                                         {attachedFiles.map((file, i) => (
-                                            <div key={i} className="relative group/file shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 border-gray-50 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 shadow-sm transition-transform hover:scale-103">
+                                            <div key={i} className="relative group/file shrink-0 w-14 h-14 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 shadow-sm transition-transform hover:scale-105">
                                                 {file.type === "image" ? (
                                                     <img src={file.preview} alt="preview" className="w-full h-full object-cover" />
                                                 ) : (
-                                                    <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center">
-                                                        <FileText size={24} className="text-blue-500 mb-1.5" />
-                                                        <span className="text-[10px] font-bold truncate w-full px-1 text-gray-500">{file.file.name}</span>
+                                                    <div className="w-full h-full flex flex-col items-center justify-center p-1 text-center">
+                                                        <FileText size={18} className="text-blue-500 mb-0.5" />
+                                                        <span className="text-[9px] font-bold truncate w-full px-1 text-gray-500">{file.file.name}</span>
                                                     </div>
                                                 )}
                                                 <button
                                                     onClick={() => removeFile(i)}
-                                                    className="absolute top-1 right-1 p-1 bg-black/70 text-white rounded-full opacity-0 group-hover/file:opacity-100 transition-all hover:bg-red-500"
+                                                    className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[1px] text-white opacity-0 group-hover/file:opacity-100 transition-all duration-200"
                                                 >
-                                                    <Plus size={12} className="rotate-45" />
+                                                    <Trash2 size={14} className="drop-shadow-md" />
                                                 </button>
                                             </div>
                                         ))}
@@ -799,13 +799,13 @@ export default function ChatPage() {
                                 )}
                             </AnimatePresence>
 
-                            <div className="flex items-end p-2 md:p-3 gap-1 md:gap-2">
+                            <div className="flex items-end p-2 md:p-2.5 gap-2">
                                 <button
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="p-2.5 md:p-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-xl md:rounded-2xl transition-all shrink-0 text-gray-400 hover:text-claude-accent group/btn"
+                                    className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-full transition-all shrink-0 text-gray-400 hover:text-claude-accent group/btn active:scale-95"
                                     title="Adjuntar archivos"
                                 >
-                                    <Paperclip size={22} className="group-hover/btn:rotate-12 transition-transform" />
+                                    <Paperclip size={20} className="group-hover/btn:rotate-12 transition-transform" />
                                     <input
                                         type="file"
                                         ref={fileInputRef}
@@ -825,25 +825,25 @@ export default function ChatPage() {
                                         }
                                     }}
                                     placeholder={t.placeholder.replace("{model}", selectedModel.name)}
-                                    className="flex-1 bg-transparent border-none focus:ring-0 resize-none py-2.5 md:py-3.5 px-1 text-[16px] leading-relaxed min-h-[48px] md:min-h-[60px] max-h-[220px] placeholder-gray-400 font-medium"
+                                    className="flex-1 bg-transparent border-none focus:ring-0 resize-none py-3 px-1 text-[16px] leading-relaxed min-h-[48px] max-h-[220px] placeholder-gray-400/80 font-medium scrollbar-hide text-gray-800 dark:text-gray-100"
                                     rows={1}
                                     style={{ height: 'auto' }}
                                 />
                                 {isLoading ? (
                                     <button
                                         onClick={handleStop}
-                                        className="p-2.5 md:p-3.5 rounded-xl md:rounded-2xl transition-all shrink-0 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-red-500 hover:text-white group"
+                                        className="p-3 rounded-full transition-all shrink-0 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white group active:scale-95"
                                         title={t.stopGeneration}
                                     >
-                                        <Square size={20} className="fill-current group-hover:fill-white md:size-[22px]" />
+                                        <Square size={18} className="fill-current group-hover:fill-white" />
                                     </button>
                                 ) : (
                                     <button
                                         onClick={handleSend}
                                         disabled={isLoading || (!input.trim() && attachedFiles.length === 0)}
-                                        className={`p-2.5 md:p-3.5 rounded-xl md:rounded-2xl transition-all shrink-0 shadow-sm ${input.trim() || attachedFiles.length > 0 ? "bg-claude-accent text-white hover:bg-claude-accent/90 hover:shadow-lg hover:shadow-claude-accent/20 active:scale-95" : "bg-gray-50 dark:bg-gray-800 text-gray-300 cursor-not-allowed"}`}
+                                        className={`p-3 rounded-full transition-all shrink-0 shadow-sm ${input.trim() || attachedFiles.length > 0 ? "bg-claude-accent text-white hover:brightness-110 hover:shadow-lg hover:shadow-claude-accent/25 active:scale-95 transform hover:-translate-y-0.5" : "bg-gray-200/50 dark:bg-gray-800/50 text-gray-400 cursor-not-allowed"}`}
                                     >
-                                        <Send size={20} className={`${input.trim() || attachedFiles.length > 0 ? "fill-white/20" : ""} md:size-[22px]`} />
+                                        <Send size={18} className={`${input.trim() || attachedFiles.length > 0 ? "fill-white/20 ml-0.5" : "ml-0.5"}`} />
                                     </button>
                                 )}
                             </div>

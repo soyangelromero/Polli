@@ -97,6 +97,15 @@
     background-color: var(--claude-bg);
     color: var(--foreground);
   }
+
+  /* Utility to hide scrollbar */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
 .markdown-content p {
