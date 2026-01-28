@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Sparkles, RotateCw, Upload } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import React from "react";
 
 // Types & Constants
 import { Message, Chat } from "../lib/types";

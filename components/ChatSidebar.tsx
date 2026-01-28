@@ -1,5 +1,6 @@
 import { Plus, MessageSquare, Trash2 } from "lucide-react";
 import { Chat } from "../lib/types"; // We need to define types somewhere or inline them
+import React from "react";
 
 interface ChatSidebarProps {
     chats: any[];
@@ -103,6 +104,7 @@ export function ChatSidebar({
                     <span>{t.logoutBtn}</span>
                 </button>
                 <div className="pt-4 flex justify-center opacity-40 hover:opacity-100 transition-opacity">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                         src="https://raw.githubusercontent.com/pollinations/pollinations/main/assets/logo.svg"
                         alt="Pollinations Logo"

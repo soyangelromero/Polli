@@ -49,13 +49,13 @@ async function transcribePdfWithClaude(fileData: string, fileName: string, apiKe
             const data = await response.json();
             return data.choices[0].message.content;
         }
-    } catch (error: any) { }
+    } catch (error: any) { /* ignore */ }
 
     try {
         const buffer = Buffer.from(fileData, 'base64');
         const result = await pdf(buffer);
         if (result.text?.trim()) return result.text;
-    } catch (e) { }
+    } catch (e) { /* ignore */ }
 
     return "[SISTEMA]: No se pudo extraer el texto del PDF.";
 }

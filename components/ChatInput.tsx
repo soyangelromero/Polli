@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Paperclip, Send, Square, FileText, Trash2 } from "lucide-react";
+import React from "react";
 
 interface ChatInputProps {
     input: string;
@@ -51,6 +52,7 @@ export function ChatInput({
                                 {attachedFiles.map((file, i) => (
                                     <div key={i} className="relative group/file shrink-0 w-14 h-14 rounded-xl overflow-hidden border border-black/10 dark:border-white/10 bg-white dark:bg-gray-800 shadow-sm transition-all hover:scale-105">
                                         {file.type === "image" ? (
+                                            // eslint-disable-next-line @next/next/no-img-element
                                             <img src={file.preview} alt="preview" className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex flex-col items-center justify-center p-1 text-center">
