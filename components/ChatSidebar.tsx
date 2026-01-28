@@ -103,14 +103,7 @@ export function ChatSidebar({
                     <Trash2 size={16} />
                     <span>{t.logoutBtn}</span>
                 </button>
-                <div className="pt-4 flex justify-center opacity-40 hover:opacity-100 transition-opacity">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                        src="https://raw.githubusercontent.com/pollinations/pollinations/main/assets/logo.svg"
-                        alt="Pollinations Logo"
-                        className="h-6 w-auto invert dark:invert-0 brightness-200"
-                    />
-                </div>
+
             </div>
         </div>
     );

@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
+import React from "react";
 import { User, Brain, ChevronUp, ChevronDown, ImageIcon, FileText } from "lucide-react";
 import dynamic from "next/dynamic";
 import remarkGfm from "remark-gfm";

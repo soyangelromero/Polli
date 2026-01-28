@@ -127,10 +127,16 @@ export function ChatInput({
                     </div>
                 </div>
 
-                <div className="text-center mt-6">
-                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] opacity-40">
+                <div className="text-center mt-6 flex items-center justify-center gap-4 opacity-40 hover:opacity-100 transition-opacity duration-300">
+                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">
                         Powered by <a href="https://pollinations.ai" target="_blank" rel="noopener noreferrer" className="hover:text-claude-accent transition-colors">Pollinations API</a>
                     </span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                        src="https://raw.githubusercontent.com/pollinations/pollinations/main/assets/logo.svg"
+                        alt="Pollinations Logo"
+                        className="h-5 w-auto invert dark:invert-0 brightness-200"
+                    />
                 </div>
             </motion.div>
 
