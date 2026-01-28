@@ -29,6 +29,7 @@ export default function ChatPage() {
     const [showReasoning, setShowReasoning] = useState<Record<string, boolean>>({});
     const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
+    const dragCounter = useRef(0);
     const [language, setLanguage] = useState<"en" | "es">("en");
     const scrollRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -174,20 +175,38 @@ export default function ChatPage() {
         if (e.target.files) processFiles(e.target.files);
     }, []);
 
-    const handleDrop = useCallback((e: React.DragEvent) => {
+    const handleDragEnter = useCallback((e: React.DragEvent) => {
         e.preventDefault();
-        setIsDragging(false);
-        if (e.dataTransfer.files) processFiles(e.dataTransfer.files);
-    }, []);
-
-    const handleDragOver = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(true);
+        e.stopPropagation();
+        dragCounter.current++;
+        if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+            setIsDragging(true);
+        }
     }, []);
 
     const handleDragLeave = useCallback((e: React.DragEvent) => {
         e.preventDefault();
+        e.stopPropagation();
+        dragCounter.current--;
+        if (dragCounter.current === 0) {
+            setIsDragging(false);
+        }
+    }, []);
+
+    const handleDragOver = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+    }, []);
+
+    const handleDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
         setIsDragging(false);
+        dragCounter.current = 0;
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            processFiles(e.dataTransfer.files);
+            e.dataTransfer.clearData();
+        }
     }, []);
 
     const removeFile = useCallback((index: number) => {
@@ -362,6 +381,7 @@ export default function ChatPage() {
     return (
         <div
             className="flex h-screen bg-claude-bg text-gray-900 dark:text-gray-100 font-sans p-0 m-0"
+            onDragEnter={handleDragEnter}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -488,6 +508,7 @@ export default function ChatPage() {
                     handleFileUpload={handleFileUpload}
                     t={t}
                     selectedModel={selectedModel}
+                    isDragging={isDragging}
                 />
             </main>
 

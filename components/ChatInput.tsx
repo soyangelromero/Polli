@@ -14,6 +14,7 @@ interface ChatInputProps {
     handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
     t: any;
     selectedModel: { name: string };
+    isDragging?: boolean;
 }
 
 export const ChatInput = React.memo(function ChatInput({
@@ -27,7 +28,8 @@ export const ChatInput = React.memo(function ChatInput({
     fileInputRef,
     handleFileUpload,
     t,
-    selectedModel
+    selectedModel,
+    isDragging
 }: ChatInputProps) {
     return (
         <div className="absolute bottom-0 left-0 right-0 px-4 md:px-6 pb-8 md:pb-12 pt-10 bg-gradient-to-t from-claude-bg via-claude-bg/80 to-transparent z-10 pointer-events-none">
@@ -38,7 +40,7 @@ export const ChatInput = React.memo(function ChatInput({
                 className="max-w-4xl mx-auto relative pointer-events-auto"
             >
                 {/* Minimalist Glass Container - Floating */}
-                <div className="relative bg-white/80 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-black/[0.06] dark:border-white/[0.06] shadow-lg dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] transition-all duration-300">
+                <div className={`relative bg-white/80 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border transition-all duration-300 ${isDragging ? "border-claude-accent ring-4 ring-claude-accent/10 shadow-2xl scale-[1.02]" : "border-black/[0.06] dark:border-white/[0.06] shadow-lg dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)]"}`}>
 
                     {/* Attached Files Preview */}
                     <AnimatePresence>
