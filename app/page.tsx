@@ -19,10 +19,8 @@ import { ApiKeyModal } from "../components/ApiKeyModal";
 export default function ChatPage() {
     const [chats, setChats] = useState<Chat[]>([]);
     const [currentChatId, setCurrentChatId] = useState<string | null>(null);
-    const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [loadingStatus, setLoadingStatus] = useState("");
-    const [searchTerm, setSearchTerm] = useState("");
     const [pollenBalance, setPollenBalance] = useState<number | null>(null);
     const [isRefreshingBalance, setIsRefreshingBalance] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState<{ file: File; type: string; preview?: string }[]>([]);
@@ -241,8 +239,8 @@ export default function ChatPage() {
         }
     }, []);
 
-    const handleSend = async () => {
-        if (!input.trim() && attachedFiles.length === 0) return;
+    const handleSend = async (text: string) => {
+        if (!text.trim() && attachedFiles.length === 0) return;
 
         let chatId = currentChatId;
         let updatedChats = [...chats];
@@ -251,7 +249,7 @@ export default function ChatPage() {
         if (!chatId) {
             const newChat: Chat = {
                 id: Date.now().toString(),
-                title: input.slice(0, 30) || "Nuevo Chat",
+                title: text.slice(0, 30) || "Nuevo Chat",
                 model: chatModel,
                 messages: [],
                 createdAt: Date.now(),
@@ -265,7 +263,7 @@ export default function ChatPage() {
         const userMsg: Message = {
             id: Date.now().toString(),
             role: "user",
-            content: input,
+            content: text,
             files: attachedFiles.map((f) => ({ name: f.file.name, type: f.type })),
         };
 
@@ -276,13 +274,12 @@ export default function ChatPage() {
         }
 
         if (updatedChats[chatIndex].messages.length === 0) {
-            updatedChats[chatIndex].title = input.slice(0, 40) || "Nuevo Chat";
+            updatedChats[chatIndex].title = text.slice(0, 40) || "Nuevo Chat";
         }
         updatedChats[chatIndex].messages.push(userMsg);
         setChats([...updatedChats]);
 
         const userMsgTitle = updatedChats[chatIndex].title;
-        setInput("");
         const currentFiles = [...attachedFiles];
         setAttachedFiles([]);
         setIsLoading(true);
@@ -426,8 +423,6 @@ export default function ChatPage() {
                 chats={chats}
                 currentChatId={currentChatId}
                 t={t}
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
                 createNewChat={createNewChat}
                 setCurrentChatId={setCurrentChatId}
                 deleteChat={deleteChat}
@@ -513,9 +508,9 @@ export default function ChatPage() {
                 </div>
 
                 <ChatInput
-                    input={input}
-                    setInput={setInput}
                     handleSend={handleSend}
+                    // The component now handles its own input state
+                    onSend={handleSend}
                     handleStop={handleStop}
                     isLoading={isLoading}
                     attachedFiles={attachedFiles}

@@ -6,8 +6,6 @@ interface ChatSidebarProps {
     chats: any[];
     currentChatId: string | null;
     t: any;
-    searchTerm: string;
-    setSearchTerm: (term: string) => void;
     createNewChat: () => void;
     setCurrentChatId: (id: string) => void;
     deleteChat: (id: string, e: React.MouseEvent) => void;
@@ -20,8 +18,6 @@ export const ChatSidebar = React.memo(function ChatSidebar({
     chats,
     currentChatId,
     t,
-    searchTerm,
-    setSearchTerm,
     createNewChat,
     setCurrentChatId,
     deleteChat,
@@ -29,6 +25,7 @@ export const ChatSidebar = React.memo(function ChatSidebar({
     setLanguage,
     onLogout
 }: ChatSidebarProps) {
+    const [searchTerm, setSearchTerm] = React.useState("");
     // We can also memoize the filtered list inside
     const filteredChats = useMemo(() =>
         chats.filter(c => c.title.toLowerCase().includes(searchTerm.toLowerCase())),

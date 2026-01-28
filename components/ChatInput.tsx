@@ -3,34 +3,37 @@ import { Paperclip, Send, Square, FileText, Trash2 } from "lucide-react";
 import React from "react";
 
 interface ChatInputProps {
-    input: string;
-    setInput: (input: string) => void;
-    handleSend: () => void;
-    handleStop: () => void;
-    isLoading: boolean;
     attachedFiles: { file: File; type: string; preview?: string }[];
     removeFile: (index: number) => void;
     fileInputRef: React.RefObject<HTMLInputElement | null>;
     handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onSend: (text: string) => void;
+    handleStop: () => void;
+    isLoading: boolean;
     t: any;
     selectedModel: { name: string };
     isDragging?: boolean;
 }
 
 export const ChatInput = React.memo(function ChatInput({
-    input,
-    setInput,
-    handleSend,
-    handleStop,
-    isLoading,
     attachedFiles,
     removeFile,
     fileInputRef,
     handleFileUpload,
+    onSend,
+    handleStop,
+    isLoading,
     t,
     selectedModel,
     isDragging
 }: ChatInputProps) {
+    const [input, setInput] = React.useState("");
+
+    const handleInternalSend = () => {
+        if (!input.trim() && attachedFiles.length === 0) return;
+        onSend(input);
+        setInput("");
+    };
     return (
         <div className="absolute bottom-0 left-0 right-0 px-4 md:px-6 pb-8 md:pb-12 pt-10 bg-gradient-to-t from-claude-bg via-claude-bg/80 to-transparent z-10 pointer-events-none">
             <motion.div
@@ -99,7 +102,7 @@ export const ChatInput = React.memo(function ChatInput({
                             onKeyDown={(e) => {
                                 if (e.key === "Enter" && !e.shiftKey) {
                                     e.preventDefault();
-                                    handleSend();
+                                    handleInternalSend();
                                 }
                             }}
                             placeholder={t.placeholder.replace("{model}", selectedModel.name)}
@@ -118,7 +121,7 @@ export const ChatInput = React.memo(function ChatInput({
                             </button>
                         ) : (
                             <button
-                                onClick={handleSend}
+                                onClick={handleInternalSend}
                                 disabled={isLoading || (!input.trim() && attachedFiles.length === 0)}
                                 className={`p-3 rounded-full transition-all shrink-0 transform ${input.trim() || attachedFiles.length > 0
                                     ? "bg-claude-accent text-white shadow-lg shadow-claude-accent/20 hover:-translate-y-0.5 active:scale-95"
