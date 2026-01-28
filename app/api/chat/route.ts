@@ -63,10 +63,26 @@ async function transcribePdfWithClaude(fileData: string, fileName: string, apiKe
 export async function POST(req: NextRequest) {
     try {
         const apiKey = req.headers.get("x-api-key");
-        if (!apiKey) return NextResponse.json({ error: "API Key missing" }, { status: 401 });
+        if (!apiKey) {
+            return NextResponse.json(
+                {
+                    error: "API Key missing",
+                    info: "Get your free API key at https://pollinations.ai/login"
+                },
+                { status: 401 }
+            );
+        }
 
         const body = await req.json();
         const { messages, files, model = "claude-large" } = body;
+
+        // Security: Validate file limits
+        if (files && files.length > 5) {
+            return NextResponse.json(
+                { error: "Too many files. Maximum allowed is 5." },
+                { status: 400 }
+            );
+        }
 
         const skillsPrompt = loadSkills();
         const systemMessage = {
@@ -88,6 +104,14 @@ export async function POST(req: NextRequest) {
         if (files && files.length > 0) {
             let contentParts: any[] = [{ type: "text", text: lastMessage.content }];
             for (const file of files) {
+                // Security: Max file size ~5MB (in base64, 5MB is approx 6.7MB string length)
+                if (file.data && file.data.length > 7000000) {
+                    return NextResponse.json(
+                        { error: `File ${file.name} is too large. Limit is 5MB.` },
+                        { status: 400 }
+                    );
+                }
+
                 if (file.type === "image") {
                     contentParts.push({ type: "image_url", image_url: { url: file.url } });
                 } else if (file.type === "file") {
