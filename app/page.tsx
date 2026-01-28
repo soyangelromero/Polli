@@ -151,7 +151,7 @@ export default function ChatPage() {
         });
     }, [currentChatId, t.deleteConfirm]);
 
-    const processFiles = (files: FileList | File[]) => {
+    const processFiles = useCallback((files: FileList | File[]) => {
         Array.from(files).forEach((file) => {
             // Check file size (Security Issue #4)
             if (file.size > 5 * 1024 * 1024) {
@@ -169,7 +169,23 @@ export default function ChatPage() {
             };
             reader.readAsDataURL(file);
         });
-    };
+    }, []);
+
+    // Global drag handlers to prevent browser from opening files
+    useEffect(() => {
+        const preventDefault = (e: DragEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        window.addEventListener("dragover", preventDefault);
+        window.addEventListener("drop", preventDefault);
+
+        return () => {
+            window.removeEventListener("dragover", preventDefault);
+            window.removeEventListener("drop", preventDefault);
+        };
+    }, []);
 
     const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) processFiles(e.target.files);
