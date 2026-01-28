@@ -16,7 +16,7 @@ interface ChatInputProps {
     selectedModel: { name: string };
 }
 
-export function ChatInput({
+export const ChatInput = React.memo(function ChatInput({
     input,
     setInput,
     handleSend,
@@ -142,4 +142,4 @@ export function ChatInput({
 
         </div>
     );
-}
+});

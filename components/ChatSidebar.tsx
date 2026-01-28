@@ -1,6 +1,6 @@
 import { Plus, MessageSquare, Trash2 } from "lucide-react";
 import { Chat } from "../lib/types"; // We need to define types somewhere or inline them
-import React from "react";
+import React, { useMemo } from "react";
 
 interface ChatSidebarProps {
     chats: any[];
@@ -16,7 +16,7 @@ interface ChatSidebarProps {
     onLogout: () => void;
 }
 
-export function ChatSidebar({
+export const ChatSidebar = React.memo(function ChatSidebar({
     chats,
     currentChatId,
     t,
@@ -29,6 +29,12 @@ export function ChatSidebar({
     setLanguage,
     onLogout
 }: ChatSidebarProps) {
+    // We can also memoize the filtered list inside
+    const filteredChats = useMemo(() =>
+        chats.filter(c => c.title.toLowerCase().includes(searchTerm.toLowerCase())),
+        [chats, searchTerm]
+    );
+
     return (
         <div className="w-72 bg-claude-sidebar/80 backdrop-blur-xl hidden md:flex flex-col border-r border-white/[0.04] transition-all z-30">
             <div className="p-4">
@@ -54,7 +60,7 @@ export function ChatSidebar({
                 <div className="text-[11px] font-bold text-gray-400 px-3 py-2 uppercase tracking-[0.1em] flex justify-between items-center">
                     <span>{t.conversations}</span>
                 </div>
-                {chats.filter(c => c.title.toLowerCase().includes(searchTerm.toLowerCase())).map((chat) => (
+                {filteredChats.map((chat) => (
                     <div
                         key={chat.id}
                         onClick={() => setCurrentChatId(chat.id)}
@@ -72,7 +78,7 @@ export function ChatSidebar({
                         </button>
                     </div>
                 ))}
-                {chats.length === 0 && (
+                {filteredChats.length === 0 && (
                     <div className="text-sm text-gray-400 px-3 py-10 text-center italic">No hay chats aún</div>
                 )}
             </div>
@@ -107,4 +113,4 @@ export function ChatSidebar({
             </div>
         </div>
     );
-}
+});

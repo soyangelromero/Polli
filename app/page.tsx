@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Sparkles, RotateCw, Upload } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import React from "react";
@@ -102,13 +102,13 @@ export default function ChatPage() {
         }
     }, [currentChatId, chats, showReasoning]); // Also scroll when reasoning toggles
 
-    const currentChat = chats.find(c => c.id === currentChatId);
-    const messages = currentChat?.messages || [];
+    const currentChat = useMemo(() => chats.find(c => c.id === currentChatId), [chats, currentChatId]);
+    const messages = useMemo(() => currentChat?.messages || [], [currentChat]);
     const selectedModelId = currentChat?.model || "claude-large";
-    const selectedModel = MODELS.find(m => m.id === selectedModelId) || MODELS[0];
-    const t = TRANSLATIONS[language];
+    const selectedModel = useMemo(() => MODELS.find(m => m.id === selectedModelId) || MODELS[0], [selectedModelId]);
+    const t = useMemo(() => TRANSLATIONS[language], [language]);
 
-    const createNewChat = () => {
+    const createNewChat = useCallback(() => {
         const newChat: Chat = {
             id: Date.now().toString(),
             title: t.newChat,
@@ -118,9 +118,9 @@ export default function ChatPage() {
         };
         setChats(prev => [newChat, ...prev]);
         setCurrentChatId(newChat.id);
-    };
+    }, [t.newChat]);
 
-    const changeModel = (modelId: string) => {
+    const changeModel = useCallback((modelId: string) => {
         if (!currentChatId) {
             const newChat: Chat = {
                 id: Date.now().toString(),
@@ -135,18 +135,20 @@ export default function ChatPage() {
             setChats(prev => prev.map(c => c.id === currentChatId ? { ...c, model: modelId } : c));
         }
         setIsModelMenuOpen(false);
-    };
+    }, [currentChatId]);
 
-    const deleteChat = async (id: string, e: React.MouseEvent) => {
+    const deleteChat = useCallback(async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
         if (!confirm(t.deleteConfirm)) return;
 
-        const updated = chats.filter(c => c.id !== id);
-        setChats(updated);
-        if (currentChatId === id) {
-            setCurrentChatId(updated.length > 0 ? updated[0].id : null);
-        }
-    };
+        setChats(prev => {
+            const updated = prev.filter(c => c.id !== id);
+            if (currentChatId === id) {
+                setCurrentChatId(updated.length > 0 ? updated[0].id : null);
+            }
+            return updated;
+        });
+    }, [currentChatId, t.deleteConfirm]);
 
     const processFiles = (files: FileList | File[]) => {
         Array.from(files).forEach((file) => {
@@ -168,41 +170,41 @@ export default function ChatPage() {
         });
     };
 
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) processFiles(e.target.files);
-    };
+    }, []);
 
-    const handleDrop = (e: React.DragEvent) => {
+    const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
         if (e.dataTransfer.files) processFiles(e.dataTransfer.files);
-    };
+    }, []);
 
-    const handleDragOver = (e: React.DragEvent) => {
+    const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(true);
-    };
+    }, []);
 
-    const handleDragLeave = (e: React.DragEvent) => {
+    const handleDragLeave = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
-    };
+    }, []);
 
-    const removeFile = (index: number) => {
+    const removeFile = useCallback((index: number) => {
         setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
-    };
+    }, []);
 
-    const toggleReasoning = (msgId: string) => {
+    const toggleReasoning = useCallback((msgId: string) => {
         setShowReasoning(prev => ({ ...prev, [msgId]: !prev[msgId] }));
-    };
+    }, []);
 
-    const handleStop = () => {
+    const handleStop = useCallback(() => {
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
             setIsLoading(false);
             abortControllerRef.current = null;
         }
-    };
+    }, []);
 
     const handleSend = async () => {
         if (!input.trim() && attachedFiles.length === 0) return;
@@ -394,16 +396,16 @@ export default function ChatPage() {
                 setCurrentChatId={setCurrentChatId}
                 deleteChat={deleteChat}
                 language={language}
-                setLanguage={(lang) => {
+                setLanguage={useCallback((lang) => {
                     setLanguage(lang);
                     localStorage.setItem("app_language", lang);
-                }}
-                onLogout={() => {
+                }, [])}
+                onLogout={useCallback(() => {
                     if (confirm(t.logoutConfirm)) {
                         localStorage.removeItem("pollinations_api_key");
                         window.location.reload();
                     }
-                }}
+                }, [t.logoutConfirm])}
             />
 
             {/* Main Chat */}

@@ -31,7 +31,7 @@ interface ChatWindowProps {
     language: "en" | "es";
 }
 
-export function ChatWindow({
+export const ChatWindow = React.memo(function ChatWindow({
     messages,
     currentChat,
     selectedModel,
@@ -170,4 +170,4 @@ export function ChatWindow({
             )}
         </div>
     );
-}
+});

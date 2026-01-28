@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Copy } from "lucide-react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 
@@ -10,7 +10,7 @@ interface CodeBlockProps {
     value: string;
 }
 
-export const CodeBlock = ({ language, value }: CodeBlockProps) => {
+export const CodeBlock = React.memo(({ language, value }: CodeBlockProps) => {
     const [isCopied, setIsCopied] = useState(false);
 
     const copyToClipboard = async () => {
@@ -63,4 +63,6 @@ export const CodeBlock = ({ language, value }: CodeBlockProps) => {
             </div>
         </div>
     );
-};
+});
+
+CodeBlock.displayName = "CodeBlock";
