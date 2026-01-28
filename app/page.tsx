@@ -169,59 +169,58 @@ export default function ChatPage() {
         });
     }, []);
 
-    // Global drag handlers to prevent browser from opening files
+    // Global drag handlers to prevent browser from opening files and handle drops
     useEffect(() => {
-        const preventDefault = (e: DragEvent) => {
+        const handleGlobalDragOver = (e: DragEvent) => {
             e.preventDefault();
             e.stopPropagation();
         };
 
-        window.addEventListener("dragover", preventDefault);
-        window.addEventListener("drop", preventDefault);
+        const handleGlobalDragEnter = (e: DragEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dragCounter.current++;
+            if (e.dataTransfer?.items && e.dataTransfer.items.length > 0) {
+                setIsDragging(true);
+            }
+        };
+
+        const handleGlobalDragLeave = (e: DragEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dragCounter.current--;
+            if (dragCounter.current <= 0) {
+                dragCounter.current = 0;
+                setIsDragging(false);
+            }
+        };
+
+        const handleGlobalDrop = (e: DragEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragging(false);
+            dragCounter.current = 0;
+            if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+                processFiles(e.dataTransfer.files);
+            }
+        };
+
+        window.addEventListener("dragover", handleGlobalDragOver);
+        window.addEventListener("dragenter", handleGlobalDragEnter);
+        window.addEventListener("dragleave", handleGlobalDragLeave);
+        window.addEventListener("drop", handleGlobalDrop);
 
         return () => {
-            window.removeEventListener("dragover", preventDefault);
-            window.removeEventListener("drop", preventDefault);
+            window.removeEventListener("dragover", handleGlobalDragOver);
+            window.removeEventListener("dragenter", handleGlobalDragEnter);
+            window.removeEventListener("dragleave", handleGlobalDragLeave);
+            window.removeEventListener("drop", handleGlobalDrop);
         };
-    }, []);
+    }, [processFiles]);
 
     const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) processFiles(e.target.files);
-    }, []);
-
-    const handleDragEnter = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dragCounter.current++;
-        if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
-            setIsDragging(true);
-        }
-    }, []);
-
-    const handleDragLeave = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dragCounter.current--;
-        if (dragCounter.current === 0) {
-            setIsDragging(false);
-        }
-    }, []);
-
-    const handleDragOver = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-    }, []);
-
-    const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(false);
-        dragCounter.current = 0;
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            processFiles(e.dataTransfer.files);
-            e.dataTransfer.clearData();
-        }
-    }, []);
+    }, [processFiles]);
 
     const removeFile = useCallback((index: number) => {
         setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
@@ -392,13 +391,7 @@ export default function ChatPage() {
     };
 
     return (
-        <div
-            className="flex h-screen bg-claude-bg text-gray-900 dark:text-gray-100 font-sans p-0 m-0"
-            onDragEnter={handleDragEnter}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-        >
+        <div className="flex h-screen bg-claude-bg text-gray-900 dark:text-gray-100 font-sans p-0 m-0">
             {/* Drag Overlay */}
             <AnimatePresence>
                 {isDragging && (
@@ -508,7 +501,6 @@ export default function ChatPage() {
                 </div>
 
                 <ChatInput
-                    handleSend={handleSend}
                     // The component now handles its own input state
                     onSend={handleSend}
                     handleStop={handleStop}
