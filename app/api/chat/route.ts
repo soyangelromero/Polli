@@ -144,7 +144,11 @@ export async function POST(req: NextRequest) {
             })
         });
 
-        if (!response.ok) return NextResponse.json({ error: await response.json() }, { status: response.status });
+        if (!response.ok) {
+            const errorData = await response.json();
+            const errorMessage = errorData.error?.message || errorData.error || errorData.message || JSON.stringify(errorData);
+            return NextResponse.json({ error: errorMessage }, { status: response.status });
+        }
 
         const data = await response.json();
         const assistantMessage = data.choices[0].message;

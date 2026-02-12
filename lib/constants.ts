@@ -1,7 +1,7 @@
 import { Bot, Cpu, Sparkles } from "lucide-react";
 
 export const MODELS = [
-    { id: "claude-large", name: "Claude Opus 4.5", icon: Bot, color: "text-claude-accent", desc: "Advanced reasoning & vision" },
+    { id: "claude-large", name: "Claude Opus 4.6", icon: Bot, color: "text-claude-accent", desc: "Advanced reasoning & vision" },
     { id: "deepseek", name: "DeepSeek V3.2", icon: Cpu, color: "text-blue-500", desc: "Powerful code and logic" },
     { id: "openai-large", name: "GPT-5.2", icon: Sparkles, color: "text-green-500", desc: "Versatile and creative" },
 ];
@@ -25,7 +25,7 @@ export const TRANSLATIONS = {
         logoutConfirm: "Close session and reset API credentials?",
         logoutBtn: "Reset Session",
         configTitle: "System Authentication",
-        configDesc: "Provide a Pollinations API Key to initialize a secure analytical session. Required: `claude-large` (Opus 4.5), `deepseek` (V3), and `openai-large` (ChatGPT 5.2).",
+        configDesc: "Provide a Pollinations API Key to initialize a secure analytical session. Required: `claude-large` (Opus 4.6), `deepseek` (V3), and `openai-large` (ChatGPT 5.2).",
         configPlaceholder: "API Key (sk_...)",
         configBtn: "Initialize",
         getApiKey: "Credential Management",

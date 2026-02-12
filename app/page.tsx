@@ -331,7 +331,8 @@ export default function ChatPage() {
 
             if (!response.ok) {
                 // Handle errors (display as assistant message or alert)
-                const errorMsg = data.error || data.info || "Error de conexión";
+                const rawError = data.error || data.info || "Error de conexión";
+                const errorMsg = typeof rawError === "string" ? rawError : JSON.stringify(rawError);
                 // Optionally push an error message to chat
                 const errorSystemMsg: Message = {
                     id: (Date.now() + 1).toString(),
