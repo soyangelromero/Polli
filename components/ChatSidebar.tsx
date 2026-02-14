@@ -61,13 +61,30 @@ export const ChatSidebar = React.memo(function ChatSidebar({
                         </button>
                     </div>
 
-                    <button
-                        onClick={createNewChat}
-                        className="w-full h-12 flex items-center justify-start gap-3 px-4 rounded-xl border border-gray-300 dark:border-gray-700 hover:bg-white/50 dark:hover:bg-white/5 transition-all font-medium text-gray-700 dark:text-gray-200"
-                    >
-                        <Plus size={20} className="text-claude-accent" />
-                        <span>{t.newChat}</span>
-                    </button>
+                    <div className="flex flex-col gap-2">
+                        <button
+                            onClick={createNewChat}
+                            className="w-full h-12 flex items-center justify-start gap-3 px-4 rounded-xl border border-gray-300 dark:border-gray-700 hover:bg-white/50 dark:hover:bg-white/5 transition-all font-medium text-gray-700 dark:text-gray-200 bg-white/30 dark:bg-white/5 shadow-sm"
+                        >
+                            <Plus size={20} className="text-claude-accent" />
+                            <span>{t.newChat}</span>
+                        </button>
+
+                        <a
+                            href="/vibe"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full h-12 flex items-center justify-start gap-3 px-4 rounded-xl border border-claude-accent/20 bg-claude-accent/5 hover:bg-claude-accent/10 transition-all font-bold text-claude-accent group"
+                        >
+                            <div className="p-1.5 rounded-lg bg-claude-accent text-white group-hover:scale-110 transition-transform">
+                                <Plus size={16} className="rotate-45" />
+                            </div>
+                            <div className="flex flex-col items-start leading-none">
+                                <span className="text-sm">{t.vibeHub}</span>
+                                <span className="text-[9px] opacity-60 font-medium uppercase tracking-tighter mt-0.5">{t.vibeHubDesc}</span>
+                            </div>
+                        </a>
+                    </div>
                     {/* ... (rest of search history) */}
                     <div className="mt-4 relative">
                         <input

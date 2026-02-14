@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import React from "react";
-import { User, Brain, ChevronUp, ChevronDown, ImageIcon, FileText, Download, Play } from "lucide-react";
+import { User, Brain, ChevronUp, ChevronDown, ImageIcon, FileText, Download, Play, Plus } from "lucide-react";
 import dynamic from "next/dynamic";
 import remarkGfm from "remark-gfm";
 
@@ -121,6 +121,36 @@ export const ChatWindow = React.memo(function ChatWindow({
                     {language === 'en' ? `${label.en} ${selectedModel.name}` : `${label.es} ${selectedModel.name}`}
                 </h2>
                 <p className="text-gray-500 text-sm md:text-lg max-w-md">{t.dropInstruction}</p>
+
+                {/* Vibe Hub Entrance Card */}
+                <div className="mt-12 w-full max-w-sm">
+                    <a
+                        href="/vibe"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group relative flex flex-col items-center p-8 rounded-[2.5rem] bg-gradient-to-br from-claude-accent/20 to-purple-500/10 border border-claude-accent/20 hover:border-claude-accent/40 shadow-xl shadow-claude-accent/5 transition-all hover:-translate-y-1 overflow-hidden"
+                    >
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <Brain size={120} />
+                        </div>
+
+                        <div className="w-14 h-14 bg-claude-accent rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-claude-accent/30 group-hover:scale-110 transition-transform">
+                            <Brain size={32} />
+                        </div>
+
+                        <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2 uppercase tracking-tight">
+                            {t.vibeHub}
+                        </h3>
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400 text-center leading-relaxed">
+                            {t.vibeHubDesc}
+                        </p>
+
+                        <div className="mt-6 flex items-center gap-2 text-xs font-black text-claude-accent uppercase tracking-widest px-4 py-2 rounded-full bg-white dark:bg-gray-800 shadow-sm border border-claude-accent/10">
+                            <span>Open Hub</span>
+                            <Plus size={14} className="rotate-45" />
+                        </div>
+                    </a>
+                </div>
 
                 {/* Category hint */}
                 {selectedModel.category !== "text" && (
