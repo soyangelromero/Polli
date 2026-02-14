@@ -20,6 +20,8 @@ export default function DebugConsole({ logs, isOpen, onToggle, onClear }: DebugC
     const bottomRef = useRef<HTMLDivElement>(null);
     const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
     const [copiedId, setCopiedId] = useState<string | null>(null);
+    const [height, setHeight] = useState(300); // Default height in pixels
+    const [isResizing, setIsResizing] = useState(false);
 
     // Auto-scroll to bottom when new logs arrive (if open)
     useEffect(() => {
@@ -27,6 +29,34 @@ export default function DebugConsole({ logs, isOpen, onToggle, onClear }: DebugC
             bottomRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }, [logs, isOpen]);
+
+    // Resize Logic
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isResizing) return;
+            const newHeight = window.innerHeight - e.clientY;
+            // Min height 100px, Max height window - 100px
+            if (newHeight > 100 && newHeight < window.innerHeight - 100) {
+                setHeight(newHeight);
+            }
+        };
+
+        const handleMouseUp = () => {
+            setIsResizing(false);
+            document.body.style.cursor = 'default';
+        };
+
+        if (isResizing) {
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = 'ns-resize';
+        }
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isResizing]);
 
     const toggleLogExpansion = (id: string) => {
         const newSet = new Set(expandedLogs);
@@ -62,12 +92,25 @@ export default function DebugConsole({ logs, isOpen, onToggle, onClear }: DebugC
     }
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 h-96 bg-gray-950 text-gray-200 border-t border-gray-800 shadow-2xl flex flex-col font-mono text-sm transition-transform duration-300 ease-in-out">
+        <div
+            className={`fixed bottom-0 left-0 right-0 z-50 bg-gray-950 text-gray-200 border-t border-gray-800 shadow-2xl flex flex-col font-mono text-sm ${isResizing ? 'transition-none select-none' : 'transition-transform duration-300 ease-in-out'}`}
+            style={{ height: `${height}px` }}
+        >
+            {/* Resize Handle */}
+            <div
+                className="h-2 w-full bg-gray-900 border-t border-gray-800 hover:bg-gray-800 cursor-ns-resize flex items-center justify-center transition-colors group"
+                onMouseDown={() => setIsResizing(true)}
+                title="Drag to resize"
+            >
+                <div className="w-12 h-1 bg-gray-700 rounded-full group-hover:bg-green-500/50 transition-colors" />
+            </div>
+
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-800 select-none">
+            <div className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-800 shrink-0">
                 <div className="flex items-center gap-2 text-green-400">
                     <Terminal size={16} />
-                    <span className="font-bold">Debug Console</span>
+                    <span className="font-bold hidden sm:inline">Debug Console</span>
+                    <span className="font-bold sm:hidden">Debug</span>
                     <span className="text-gray-500 text-xs ml-2">{logs.length} entries</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -96,19 +139,19 @@ export default function DebugConsole({ logs, isOpen, onToggle, onClear }: DebugC
                     </div>
                 ) : (
                     logs.map((log) => (
-                        <div key={log.id} className="border border-gray-800 rounded bg-gray-900/50 overflow-hidden">
+                        <div key={log.id} className="border border-gray-800 rounded bg-gray-900/50 overflow-hidden text-xs sm:text-sm">
                             {/* Log Header */}
                             <div
-                                className={`flex items-start gap-3 p-2 cursor-pointer hover:bg-gray-800/50 transition-colors ${log.type === 'error' ? 'text-red-400' :
+                                className={`flex items-start gap-2 sm:gap-3 p-2 cursor-pointer hover:bg-gray-800/50 transition-colors ${log.type === 'error' ? 'text-red-400' :
                                         log.type === 'request' ? 'text-blue-400' :
                                             log.type === 'response' ? 'text-green-400' : 'text-gray-300'
                                     }`}
                                 onClick={() => toggleLogExpansion(log.id)}
                             >
-                                <span className="text-xs text-gray-500 mt-0.5 whitespace-nowrap">
+                                <span className="text-[10px] text-gray-500 mt-0.5 whitespace-nowrap font-mono">
                                     {log.timestamp.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 })}
                                 </span>
-                                <span className={`uppercase text-[10px] font-bold px-1.5 py-0.5 rounded border ${log.type === 'error' ? 'border-red-900 bg-red-900/20' :
+                                <span className={`uppercase text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded border shrink-0 ${log.type === 'error' ? 'border-red-900 bg-red-900/20' :
                                         log.type === 'request' ? 'border-blue-900 bg-blue-900/20' :
                                             log.type === 'response' ? 'border-green-900 bg-green-900/20' : 'border-gray-700 bg-gray-800'
                                     }`}>
@@ -131,7 +174,7 @@ export default function DebugConsole({ logs, isOpen, onToggle, onClear }: DebugC
                                     >
                                         {copiedId === log.id ? <Check size={14} className="text-green-400" /> : <Copy size={14} className="text-gray-400" />}
                                     </button>
-                                    <pre className="text-xs text-gray-400">
+                                    <pre className="text-[10px] sm:text-xs text-gray-400 font-mono leading-tight whitespace-pre-wrap">
                                         {JSON.stringify(log.data, null, 2)}
                                     </pre>
                                 </div>

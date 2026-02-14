@@ -237,33 +237,6 @@ export const ChatWindow = React.memo(function ChatWindow({
                                 </div>
                             )}
 
-                            {/* Text content for assistant on text models with no media */}
-                            {m.role === "assistant" && !m.mediaUrl && m.mediaType !== "transcription" && typeof m.content === "string" && m.content && (
-                                <div className="markdown-content prose dark:prose-invert max-w-none break-words leading-relaxed text-[15px] md:text-[16px] text-left w-full">
-                                    <ReactMarkdown
-                                        remarkPlugins={[remarkGfm]}
-                                        components={{
-                                            code({ inline, className, children, ...props }: any) {
-                                                const match = /language-(\w+)/.exec(className || "");
-                                                return !inline && match ? (
-                                                    <CodeBlock
-                                                        language={match[1]}
-                                                        value={String(children).replace(/\n$/, "")}
-                                                        {...props}
-                                                    />
-                                                ) : (
-                                                    <code className={className} {...props}>
-                                                        {children}
-                                                    </code>
-                                                );
-                                            }
-                                        }}
-                                    >
-                                        {m.content}
-                                    </ReactMarkdown>
-                                </div>
-                            )}
-
                             {/* File attachments */}
                             {m.files && m.files.length > 0 && (
                                 <div className={`flex flex-wrap gap-2 mt-4 pt-4 border-t border-black/5 dark:border-white/5 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
