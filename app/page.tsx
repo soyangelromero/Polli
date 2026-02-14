@@ -542,32 +542,20 @@ export default function ChatPage() {
 
                     {/* Pollen Balance Display */}
                     <div className="flex items-center gap-2 md:gap-3 pr-1 md:pr-2">
-                        {/* Daily Limit (Pollen) */}
-                        <div className="hidden md:flex flex-col items-end">
-                            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-0.5">{t.dailyLimit}</span>
-                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20">
-                                <Calendar size={10} className="text-emerald-500" />
-                                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                                    {balanceData?.dailyPollen !== undefined ? balanceData.dailyPollen : "---"}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Credits Balance (Total) */}
-                        <div className="flex flex-col items-end">
-                            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-0.5">{t.credits}</span>
-                            {/* Pollen Balance */}
-                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 shadow-sm group/balance transition-all hover:bg-orange-100 dark:hover:bg-orange-500/20" title={t.pollenBalance}>
-                                <span className="text-[11px] md:text-xs font-black text-orange-600 dark:text-orange-400 flex items-center gap-1">
-                                    🌸 {balanceData ? balanceData.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "---"}
+                        {/* Balances */}
+                        <div className="flex flex-col items-end gap-1">
+                            {/* Pollen Balance (Free) */}
+                            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 shadow-sm transition-all hover:bg-orange-100 dark:hover:bg-orange-500/20" title={t.pollenBalance}>
+                                <span className="text-[10px] md:text-[11px] font-bold text-orange-600 dark:text-orange-400 flex items-center gap-1 uppercase tracking-tight">
+                                    {t.pollenBalance} <span className="font-black text-xs md:text-sm ml-0.5">{balanceData ? balanceData.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "---"}</span>
                                 </span>
                             </div>
 
                             {/* Paid Credits */}
                             {(balanceData?.credits !== undefined && balanceData.credits > 0) && (
-                                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-50 dark:bg-purple-500/10 border border-purple-100 dark:border-purple-500/20 shadow-sm group/balance transition-all hover:bg-purple-100 dark:hover:bg-purple-500/20" title={t.credits}>
-                                    <span className="text-[11px] md:text-xs font-black text-purple-600 dark:text-purple-400 flex items-center gap-1">
-                                        💎 {balanceData.credits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-500/10 border border-purple-100 dark:border-purple-500/20 shadow-sm transition-all hover:bg-purple-100 dark:hover:bg-purple-500/20" title={t.credits}>
+                                    <span className="text-[10px] md:text-[11px] font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1 uppercase tracking-tight">
+                                        {t.credits} <span className="font-black text-xs md:text-sm ml-0.5">{balanceData.credits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                     </span>
                                 </div>
                             )}
