@@ -15,6 +15,7 @@ import { ChatWindow } from "../components/ChatWindow";
 import { ChatInput } from "../components/ChatInput";
 import { ModelSelector } from "../components/ModelSelector";
 import { ApiKeyModal } from "../components/ApiKeyModal";
+import { ModelSelectionModal } from "../components/ModelSelectionModal";
 import DebugConsole, { LogEntry } from "../components/DebugConsole";
 
 // Model category helpers (client-side)
@@ -48,6 +49,7 @@ export default function ChatPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [userApiKey, setUserApiKey] = useState<string | null>(null);
     const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+    const [showModelModal, setShowModelModal] = useState(false);
     const [tempKey, setTempKey] = useState("");
 
     // Debug Console State
@@ -72,6 +74,11 @@ export default function ChatPage() {
 
         if (savedKey) {
             setUserApiKey(savedKey);
+            // Check if we need to select a model
+            const savedModel = localStorage.getItem("last_selected_model");
+            if (!savedModel) {
+                setShowModelModal(true);
+            }
         } else {
             setShowApiKeyModal(true);
         }
@@ -133,15 +140,25 @@ export default function ChatPage() {
 
     const currentChat = useMemo(() => chats.find(c => c.id === currentChatId), [chats, currentChatId]);
     const messages = useMemo(() => currentChat?.messages || [], [currentChat]);
-    const selectedModelId = currentChat?.model || "openai";
+
+    // Model Selection logic
+    const selectedModelId = useMemo(() => {
+        if (currentChat?.model) return currentChat.model;
+        if (typeof window !== "undefined") {
+            return localStorage.getItem("last_selected_model") || "gemini-fast";
+        }
+        return "gemini-fast";
+    }, [currentChat?.model]);
+
     const selectedModel = useMemo(() => MODELS.find(m => m.id === selectedModelId) || MODELS[0], [selectedModelId]);
     const t = useMemo(() => TRANSLATIONS[language], [language]);
 
     const createNewChat = useCallback(() => {
+        const defaultModel = localStorage.getItem("last_selected_model") || "gemini-fast";
         const newChat: Chat = {
             id: Date.now().toString(),
             title: t.newChat,
-            model: "openai",
+            model: defaultModel,
             messages: [],
             createdAt: Date.now(),
         };
@@ -150,6 +167,7 @@ export default function ChatPage() {
     }, [t.newChat]);
 
     const changeModel = useCallback((modelId: string) => {
+        localStorage.setItem("last_selected_model", modelId);
         if (!currentChatId) {
             const newChat: Chat = {
                 id: Date.now().toString(),
@@ -650,10 +668,29 @@ export default function ChatPage() {
                     localStorage.setItem("pollinations_api_key", key);
                     setUserApiKey(key);
                     setShowApiKeyModal(false);
+                    // After API Key, ask for model preference if not present
+                    if (!localStorage.getItem("last_selected_model")) {
+                        setShowModelModal(true);
+                    }
                 }}
                 onClose={() => setShowApiKeyModal(false)}
             />
 
+            <ModelSelectionModal
+                show={showModelModal}
+                t={t}
+                language={language}
+                onSelect={(modelId) => {
+                    localStorage.setItem("last_selected_model", modelId);
+                    setShowModelModal(false);
+                    // If we have a current chat but it's new/empty, update its model
+                    if (currentChat && currentChat.messages.length === 0) {
+                        changeModel(modelId);
+                    }
+                }}
+            />
+
+            {/* Debug Console */}
             <DebugConsole
                 logs={logs}
                 isOpen={isDebugOpen}
