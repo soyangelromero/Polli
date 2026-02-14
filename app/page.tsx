@@ -15,6 +15,7 @@ import { ChatWindow } from "../components/ChatWindow";
 import { ChatInput } from "../components/ChatInput";
 import { ModelSelector } from "../components/ModelSelector";
 import { ApiKeyModal } from "../components/ApiKeyModal";
+import DebugConsole, { LogEntry } from "../components/DebugConsole";
 
 // Model category helpers (client-side)
 const IMAGE_MODEL_IDS = IMAGE_MODELS.map(m => m.id);
@@ -48,6 +49,20 @@ export default function ChatPage() {
     const [userApiKey, setUserApiKey] = useState<string | null>(null);
     const [showApiKeyModal, setShowApiKeyModal] = useState(false);
     const [tempKey, setTempKey] = useState("");
+
+    // Debug Console State
+    const [logs, setLogs] = useState<LogEntry[]>([]);
+    const [isDebugOpen, setIsDebugOpen] = useState(false);
+
+    const addLog = (type: 'info' | 'error' | 'request' | 'response', title: string, data?: any) => {
+        setLogs(prev => [...prev, {
+            id: Date.now().toString() + Math.random().toString().slice(2),
+            timestamp: new Date(),
+            type,
+            title,
+            data
+        }]);
+    };
     const abortControllerRef = useRef<AbortController | null>(null);
 
     // Initial Config Load & Balance Check
@@ -407,6 +422,7 @@ export default function ChatPage() {
                     files: preparedFiles
                 };
 
+                addLog('request', `Sending to ${chatModel}`, requestBody);
                 console.log("--- BROWSER CHAT REQUEST ---");
                 console.log("Model:", chatModel);
                 console.log("Payload:", requestBody);
@@ -422,6 +438,12 @@ export default function ChatPage() {
                 });
 
                 const data = await response.json();
+
+                if (response.ok) {
+                    addLog('response', 'Received response', data);
+                } else {
+                    addLog('error', `API Error ${response.status}`, data);
+                }
 
                 if (!response.ok) {
                     const rawError = data.error || data.info || "Error de conexión";
@@ -630,6 +652,13 @@ export default function ChatPage() {
                     setShowApiKeyModal(false);
                 }}
                 onClose={() => setShowApiKeyModal(false)}
+            />
+
+            <DebugConsole
+                logs={logs}
+                isOpen={isDebugOpen}
+                onToggle={() => setIsDebugOpen(!isDebugOpen)}
+                onClear={() => setLogs([])}
             />
         </div>
     );
