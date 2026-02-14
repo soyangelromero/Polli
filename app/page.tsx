@@ -606,6 +606,7 @@ export default function ChatPage() {
                             changeModel={changeModel}
                             t={t}
                             language={language}
+                            openModelModal={() => setShowModelModal(true)}
                         />
                     </div>
 
@@ -664,6 +665,7 @@ export default function ChatPage() {
                         showReasoning={showReasoning}
                         toggleReasoning={toggleReasoning}
                         language={language}
+                        openModelModal={() => setShowModelModal(true)}
                     />
                 </div>
 

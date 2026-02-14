@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import React, { useState, useMemo } from "react";
-import { ChevronDown, Diamond, AlertTriangle } from "lucide-react";
+import { ChevronDown, Diamond, AlertTriangle, Sparkles } from "lucide-react";
 import { MODELS, MODEL_CATEGORIES, getModelsByCategory, type ModelDef, type ModelCategory } from "../lib/constants";
 
 interface ModelSelectorProps {
@@ -11,6 +11,7 @@ interface ModelSelectorProps {
     changeModel: (id: string) => void;
     t: any;
     language: "en" | "es";
+    openModelModal: () => void;
 }
 
 function CapabilityBadge({ cap }: { cap: string }) {
@@ -86,7 +87,8 @@ export function ModelSelector({
     setIsModelMenuOpen,
     changeModel,
     t,
-    language
+    language,
+    openModelModal
 }: ModelSelectorProps) {
     const [activeCategory, setActiveCategory] = useState<ModelCategory>(selectedModel?.category || "text");
 
@@ -199,6 +201,18 @@ export function ModelSelector({
                                     </div>
                                 )}
                             </div>
+
+                            {/* Footer - See All Models */}
+                            <button
+                                onClick={() => {
+                                    setIsModelMenuOpen(false);
+                                    openModelModal();
+                                }}
+                                className="w-full flex items-center justify-center gap-2 py-3 bg-gray-50 dark:bg-gray-800/80 hover:bg-claude-accent/5 text-claude-accent text-[10px] font-black uppercase tracking-[0.1em] border-t border-gray-100 dark:border-gray-800 transition-colors"
+                            >
+                                <Sparkles size={12} />
+                                {language === "es" ? "Ver todos los modelos" : "See all models"}
+                            </button>
                         </motion.div>
                     </>
                 )}

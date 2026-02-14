@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import React from "react";
-import { User, Brain, ChevronUp, ChevronDown, ImageIcon, FileText, Download, Play, Plus } from "lucide-react";
+import { User, Brain, ChevronUp, ChevronDown, ImageIcon, FileText, Download, Play, Plus, Sparkles } from "lucide-react";
 import dynamic from "next/dynamic";
 import remarkGfm from "remark-gfm";
 
@@ -23,6 +23,7 @@ interface ChatWindowProps {
     showReasoning: Record<string, boolean>;
     toggleReasoning: (msgId: string) => void;
     language: "en" | "es";
+    openModelModal: () => void;
 }
 
 function MediaContent({ message, t }: { message: Message; t: any }) {
@@ -100,7 +101,8 @@ export const ChatWindow = React.memo(function ChatWindow({
     loadingStatus,
     showReasoning,
     toggleReasoning,
-    language
+    language,
+    openModelModal
 }: ChatWindowProps) {
 
     if (!currentChat || messages.length === 0) {
@@ -114,13 +116,29 @@ export const ChatWindow = React.memo(function ChatWindow({
 
         return (
             <div className="h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto px-6 animate-in fade-in zoom-in-95 duration-500 py-10">
-                <div className="w-12 h-12 md:w-16 md:h-16 bg-white dark:bg-gray-800 rounded-3xl flex items-center justify-center mb-6 md:mb-8 shadow-xl border border-gray-100 dark:border-gray-700">
-                    <selectedModel.icon size={28} className={`${selectedModel.color} md:size-[34px]`} />
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-white dark:bg-gray-800 rounded-3xl flex items-center justify-center mb-6 md:mb-8 shadow-xl border border-gray-100 dark:border-gray-700 relative group/model-icon">
+                    <selectedModel.icon size={28} className={`${selectedModel.color} md: size - [34px]`} />
+                    <button
+                        onClick={openModelModal}
+                        className="absolute -bottom-2 -right-2 p-2 rounded-xl bg-claude-accent text-white shadow-lg hover:scale-110 transition-transform active:scale-95"
+                        title={t.changeModel}
+                    >
+                        <Plus size={16} />
+                    </button>
                 </div>
                 <h2 className="text-2xl md:text-4xl font-bold tracking-tight mb-3 text-gray-800 dark:text-gray-100">
-                    {language === 'en' ? `${label.en} ${selectedModel.name}` : `${label.es} ${selectedModel.name}`}
+                    {language === 'en' ? `${label.en} ${selectedModel.name} ` : `${label.es} ${selectedModel.name} `}
                 </h2>
-                <p className="text-gray-500 text-sm md:text-lg max-w-md">{t.dropInstruction}</p>
+                <div className="flex flex-col items-center gap-4">
+                    <p className="text-gray-500 text-sm md:text-lg max-w-md">{t.dropInstruction}</p>
+                    <button
+                        onClick={openModelModal}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl border border-claude-accent/20 bg-claude-accent/5 hover:bg-claude-accent/10 text-claude-accent text-sm font-bold transition-all"
+                    >
+                        <Sparkles size={16} />
+                        {language === 'en' ? 'Change Engine' : 'Cambiar Motor'}
+                    </button>
+                </div>
 
                 {/* Category hint */}
                 {selectedModel.category !== "text" && (
@@ -143,11 +161,11 @@ export const ChatWindow = React.memo(function ChatWindow({
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                    key={m.id || `msg-${index}`}
-                    className={`flex w-full gap-3 md:gap-4 ${m.role === "user" ? "flex-row-reverse" : "flex-row"}`}
+                    key={m.id || `msg - ${index} `}
+                    className={`flex w - full gap - 3 md: gap - 4 ${m.role === "user" ? "flex-row-reverse" : "flex-row"} `}
                 >
                     {/* Avatar */}
-                    <div className={`w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center shrink-0 shadow-sm border dark:border-white/10 ${m.role === "user" ? "bg-claude-accent text-white" : "bg-white dark:bg-gray-800"}`}>
+                    <div className={`w - 8 h - 8 md: w - 9 md: h - 9 rounded - full flex items - center justify - center shrink - 0 shadow - sm border dark: border - white / 10 ${m.role === "user" ? "bg-claude-accent text-white" : "bg-white dark:bg-gray-800"} `}>
                         {m.role === "user" ? (
                             <User size={18} />
                         ) : (
@@ -158,13 +176,13 @@ export const ChatWindow = React.memo(function ChatWindow({
                         )}
                     </div>
 
-                    <div className={`flex-1 min-w-0 flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
+                    <div className={`flex - 1 min - w - 0 flex flex - col ${m.role === "user" ? "items-end" : "items-start"} `}>
                         <div
-                            id={`msg-${m.id}`}
-                            className={`relative group/msg transition-all duration-300 w-full ${m.role === "user"
-                                ? "bg-gray-100 dark:bg-white/10 p-3.5 md:p-4 rounded-[22px] rounded-tr-none text-gray-800 dark:text-gray-100 max-w-[85%]"
-                                : "bg-transparent p-0 md:pt-1 text-gray-800 dark:text-gray-200 max-w-none"
-                                }`}
+                            id={`msg - ${m.id} `}
+                            className={`relative group / msg transition - all duration - 300 w - full ${m.role === "user"
+                                    ? "bg-gray-100 dark:bg-white/10 p-3.5 md:p-4 rounded-[22px] rounded-tr-none text-gray-800 dark:text-gray-100 max-w-[85%]"
+                                    : "bg-transparent p-0 md:pt-1 text-gray-800 dark:text-gray-200 max-w-none"
+                                } `}
                         >
                             {/* Reasoning */}
                             {m.role === "assistant" && m.reasoning && (
@@ -239,7 +257,7 @@ export const ChatWindow = React.memo(function ChatWindow({
 
                             {/* File attachments */}
                             {m.files && m.files.length > 0 && (
-                                <div className={`flex flex-wrap gap-2 mt-4 pt-4 border-t border-black/5 dark:border-white/5 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                                <div className={`flex flex - wrap gap - 2 mt - 4 pt - 4 border - t border - black / 5 dark: border - white / 5 ${m.role === "user" ? "justify-end" : "justify-start"} `}>
                                     {m.files.map((f, i) => (
                                         <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/50 dark:bg-white/5 border border-black/5 dark:border-white/10 text-[11px] font-bold text-gray-500 dark:text-gray-400 group/file shadow-sm max-w-[180px]">
                                             {f.type === "image" ? <ImageIcon size={14} className="text-claude-accent" /> : <FileText size={14} className="text-blue-500" />}
