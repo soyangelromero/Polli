@@ -559,7 +559,7 @@ export default function ChatPage() {
                             {/* Pollen Balance */}
                             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 shadow-sm group/balance transition-all hover:bg-orange-100 dark:hover:bg-orange-500/20" title={t.pollenBalance}>
                                 <span className="text-[11px] md:text-xs font-black text-orange-600 dark:text-orange-400 flex items-center gap-1">
-                                    🌸 {balanceData ? balanceData.balance.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : "---"}
+                                    🌸 {balanceData ? balanceData.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "---"}
                                 </span>
                             </div>
 

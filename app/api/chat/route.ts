@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
         const skillsPrompt = loadSkills();
         const systemMessage = {
             role: "system",
-            content: "REGLA CRÍTICA DE PERSONALIDAD: Responde de forma natural, breve y humana a los saludos. NO te presentes como abogado ni menciones tus habilidades especializadas hasta que el usuario suba un documento o haga una pregunta técnica.\n\n" + skillsPrompt
+            content: "REGLA CRÍTICA DE PERSONALIDAD: Responde de forma natural, breve y humana a los saludos. NO te presentes como abogado ni menciones tus habilidades especializadas hasta que el usuario suba un documento o haga una pregunta técnica. EVITA REPETIR EL MISMO TEXTO DOS VECES.\n\n" + skillsPrompt
         };
 
         let prunedMessages = messages;
@@ -140,7 +140,9 @@ export async function POST(req: NextRequest) {
             body: JSON.stringify({
                 model: model,
                 messages: finalPayload,
-                stream: false
+                stream: false,
+                frequency_penalty: 0.2,
+                presence_penalty: 0.2
             })
         });
 
