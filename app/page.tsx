@@ -46,11 +46,13 @@ export default function ChatPage() {
     const [isDragging, setIsDragging] = useState(false);
     const dragCounter = useRef(0);
     const [language, setLanguage] = useState<"en" | "es">("en");
+    const [isMounted, setIsMounted] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [userApiKey, setUserApiKey] = useState<string | null>(null);
     const [showApiKeyModal, setShowApiKeyModal] = useState(false);
     const [showModelModal, setShowModelModal] = useState(false);
+    const [selectedModelId, setSelectedModelId] = useState("gemini-fast");
     const [tempKey, setTempKey] = useState("");
 
     // Debug Console State
@@ -85,6 +87,11 @@ export default function ChatPage() {
         }
 
         if (savedLang) setLanguage(savedLang);
+
+        const savedModel = localStorage.getItem("last_selected_model");
+        if (savedModel) setSelectedModelId(savedModel);
+
+        setIsMounted(true);
 
         const fetchBalance = async () => {
             if (!savedKey) return;
@@ -143,13 +150,14 @@ export default function ChatPage() {
     const messages = useMemo(() => currentChat?.messages || [], [currentChat]);
 
     // Model Selection logic
-    const selectedModelId = useMemo(() => {
-        if (currentChat?.model) return currentChat.model;
-        if (typeof window !== "undefined") {
-            return localStorage.getItem("last_selected_model") || "gemini-fast";
+    useEffect(() => {
+        if (currentChat?.model) {
+            setSelectedModelId(currentChat.model);
+        } else if (isMounted) {
+            const saved = localStorage.getItem("last_selected_model") || "gemini-fast";
+            setSelectedModelId(saved);
         }
-        return "gemini-fast";
-    }, [currentChat?.model]);
+    }, [currentChat?.model, isMounted]);
 
     const selectedModel = useMemo(() => MODELS.find(m => m.id === selectedModelId) || MODELS[0], [selectedModelId]);
     const t = useMemo(() => TRANSLATIONS[language], [language]);
