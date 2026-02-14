@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Paperclip, Send, Square, FileText, Trash2, AudioLines } from "lucide-react";
-import React from "react";
+import { Paperclip, Send, Square, FileText, Trash2, AudioLines, Mic, StopCircle } from "lucide-react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 
 interface ChatInputProps {
     attachedFiles: { file: File; type: string; preview?: string }[];
@@ -27,13 +27,70 @@ export const ChatInput = React.memo(function ChatInput({
     selectedModel,
     isDragging
 }: ChatInputProps) {
-    const [input, setInput] = React.useState("");
+    const [input, setInput] = useState("");
+    const [isRecording, setIsRecording] = useState(false);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const audioChunksRef = useRef<Blob[]>([]);
 
     const handleInternalSend = () => {
         if (!input.trim() && attachedFiles.length === 0) return;
         onSend(input);
         setInput("");
     };
+
+    const startRecording = useCallback(async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+                const audioFile = new File([audioBlob], `recording-${Date.now()}.webm`, { type: "audio/webm" });
+
+                // Simulate file upload event or directly call a handler if possible. 
+                // Since we don't have direct access to setAttachedFiles here (it's passed via props implicitly as part of parent state usually, 
+                // but here we only have attachedFiles and removeFile), we need a way to add file.
+                // Wait, looking at props: we have attachedFiles, removeFile, fileInputRef, handleFileUpload.
+                // handleFileUpload expects a ChangeEvent.
+
+                // We actually need a prop to add specific file, OR we can use DataTransfer to simulate an event.
+                // Or better, let's ask to update the parent to expose `addFile` or similar.
+                // But for now, let's try to simulate an event if possible or use a workaround.
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(audioFile);
+
+                if (fileInputRef.current) {
+                    fileInputRef.current.files = dataTransfer.files;
+                    const event = { target: fileInputRef.current } as React.ChangeEvent<HTMLInputElement>;
+                    handleFileUpload(event);
+                }
+
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            mediaRecorder.start();
+            setIsRecording(true);
+        } catch (error) {
+            console.error("Error accessing microphone:", error);
+            alert("Could not access microphone.");
+        }
+    }, [handleFileUpload, fileInputRef]);
+
+    const stopRecording = useCallback(() => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+        }
+    }, [isRecording]);
+
     return (
         <div className="absolute bottom-0 left-0 right-0 px-4 md:px-6 pb-8 md:pb-12 pt-10 bg-gradient-to-t from-claude-bg via-claude-bg/80 to-transparent z-10 pointer-events-none">
             <motion.div
@@ -88,6 +145,7 @@ export const ChatInput = React.memo(function ChatInput({
                             onClick={() => fileInputRef.current?.click()}
                             className="p-3 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-all shrink-0 text-gray-400 hover:text-claude-accent group/btn active:scale-95"
                             title="Adjuntar"
+                            disabled={isRecording}
                         >
                             <Paperclip size={20} className="group-hover/btn:rotate-12 transition-transform duration-300" />
                             <input
@@ -100,6 +158,18 @@ export const ChatInput = React.memo(function ChatInput({
                             />
                         </button>
 
+                        {/* Mic Button */}
+                        <button
+                            onClick={isRecording ? stopRecording : startRecording}
+                            className={`p-3 rounded-full transition-all shrink-0 group active:scale-95 ${isRecording
+                                ? "bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white animate-pulse"
+                                : "hover:bg-black/5 dark:hover:bg-white/5 text-gray-400 hover:text-claude-accent"}`}
+                            title={isRecording ? "Stop Recording" : "Record Voice"}
+                            disabled={isLoading}
+                        >
+                            {isRecording ? <StopCircle size={20} className="fill-current" /> : <Mic size={20} />}
+                        </button>
+
                         <textarea
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
@@ -109,7 +179,8 @@ export const ChatInput = React.memo(function ChatInput({
                                     handleInternalSend();
                                 }
                             }}
-                            placeholder={t.placeholder.replace("{model}", selectedModel.name)}
+                            placeholder={isRecording ? "Listening..." : t.placeholder.replace("{model}", selectedModel.name)}
+                            disabled={isRecording}
                             className="flex-1 bg-transparent border-none outline-none focus:ring-0 focus:outline-none resize-none py-3 px-1 text-[15px] md:text-base leading-relaxed min-h-[48px] max-h-[250px] placeholder-gray-400 dark:placeholder-gray-500 font-normal scrollbar-hide text-gray-800 dark:text-gray-100 selection:bg-claude-accent/30"
                             rows={1}
                             style={{ height: 'auto' }}
@@ -126,7 +197,7 @@ export const ChatInput = React.memo(function ChatInput({
                         ) : (
                             <button
                                 onClick={handleInternalSend}
-                                disabled={isLoading || (!input.trim() && attachedFiles.length === 0)}
+                                disabled={isLoading || (!input.trim() && attachedFiles.length === 0) || isRecording}
                                 className={`p-3 rounded-full transition-all shrink-0 transform ${input.trim() || attachedFiles.length > 0
                                     ? "bg-claude-accent text-white shadow-lg shadow-claude-accent/20 hover:-translate-y-0.5 active:scale-95"
                                     : "text-gray-300 dark:text-gray-600 cursor-not-allowed"

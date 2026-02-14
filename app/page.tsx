@@ -558,7 +558,7 @@ export default function ChatPage() {
                             <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-0.5">{t.credits}</span>
                             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 shadow-sm group/balance transition-all hover:bg-orange-100 dark:hover:bg-orange-500/20">
                                 <span className="text-[11px] md:text-xs font-black text-orange-600 dark:text-orange-400">
-                                    {balanceData?.balance !== undefined ? balanceData.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "---"}
+                                    {balanceData ? (balanceData.credits || balanceData.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "---"}
                                 </span>
                                 <Sparkles size={11} className="text-orange-500 animate-pulse hidden xs:block" />
                             </div>
