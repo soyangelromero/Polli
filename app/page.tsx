@@ -398,6 +398,19 @@ export default function ChatPage() {
                     })
                 );
 
+
+                const requestBody = {
+                    chatId: chatId,
+                    chatTitle: userMsgTitle,
+                    model: chatModel,
+                    messages: updatedChats[chatIndex].messages.map(m => ({ role: m.role, content: m.content })),
+                    files: preparedFiles
+                };
+
+                console.log("--- BROWSER CHAT REQUEST ---");
+                console.log("Model:", chatModel);
+                console.log("Payload:", requestBody);
+
                 const response = await fetch("/api/chat", {
                     method: "POST",
                     headers: {
@@ -405,13 +418,7 @@ export default function ChatPage() {
                         "x-api-key": userApiKey || ""
                     },
                     signal: controller.signal,
-                    body: JSON.stringify({
-                        chatId: chatId,
-                        chatTitle: userMsgTitle,
-                        model: chatModel,
-                        messages: updatedChats[chatIndex].messages.map(m => ({ role: m.role, content: m.content })),
-                        files: preparedFiles
-                    }),
+                    body: JSON.stringify(requestBody),
                 });
 
                 const data = await response.json();
