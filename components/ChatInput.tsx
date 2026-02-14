@@ -181,7 +181,7 @@ export const ChatInput = React.memo(function ChatInput({
                             }}
                             placeholder={isRecording ? "Listening..." : t.placeholder.replace("{model}", selectedModel.name)}
                             disabled={isRecording}
-                            className="flex-1 bg-transparent border-none outline-none focus:ring-0 focus:outline-none resize-none py-3 px-1 text-[15px] md:text-base leading-relaxed min-h-[48px] max-h-[250px] placeholder-gray-400 dark:placeholder-gray-500 font-normal scrollbar-hide text-gray-800 dark:text-gray-100 selection:bg-claude-accent/30"
+                            className="flex-1 bg-transparent border-none outline-none focus:ring-0 focus:outline-none resize-none py-3 px-1 text-[14px] md:text-base leading-relaxed min-h-[48px] max-h-[250px] placeholder-gray-400 dark:placeholder-gray-500 font-normal scrollbar-hide text-gray-800 dark:text-gray-100 selection:bg-claude-accent/30 placeholder:truncate"
                             rows={1}
                             style={{ height: 'auto' }}
                         />
