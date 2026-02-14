@@ -557,7 +557,7 @@ export default function ChatPage() {
                         <div className="flex flex-col items-end">
                             <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-0.5">{t.credits}</span>
                             {/* Pollen Balance */}
-                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 shadow-sm group/balance transition-all hover:bg-orange-100 dark:hover:bg-orange-500/20" title={t[language].pollenBalance}>
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 shadow-sm group/balance transition-all hover:bg-orange-100 dark:hover:bg-orange-500/20" title={t.pollenBalance}>
                                 <span className="text-[11px] md:text-xs font-black text-orange-600 dark:text-orange-400 flex items-center gap-1">
                                     🌸 {balanceData ? balanceData.balance.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : "---"}
                                 </span>
@@ -565,7 +565,7 @@ export default function ChatPage() {
 
                             {/* Paid Credits */}
                             {(balanceData?.credits !== undefined && balanceData.credits > 0) && (
-                                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-50 dark:bg-purple-500/10 border border-purple-100 dark:border-purple-500/20 shadow-sm group/balance transition-all hover:bg-purple-100 dark:hover:bg-purple-500/20" title={t[language].credits}>
+                                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-50 dark:bg-purple-500/10 border border-purple-100 dark:border-purple-500/20 shadow-sm group/balance transition-all hover:bg-purple-100 dark:hover:bg-purple-500/20" title={t.credits}>
                                     <span className="text-[11px] md:text-xs font-black text-purple-600 dark:text-purple-400 flex items-center gap-1">
                                         💎 {balanceData.credits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
