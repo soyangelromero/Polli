@@ -131,6 +131,10 @@ export async function POST(req: NextRequest) {
         const hasSystemMessage = prunedMessages.some((m: any) => m.role === "system");
         const finalPayload = hasSystemMessage ? prunedMessages : [systemMessage, ...prunedMessages];
 
+        console.log("--- POLLINATIONS CHAT REQUEST ---");
+        console.log("Model:", model);
+        console.log("Messages:", JSON.stringify(finalPayload, null, 2));
+
         const response = await fetch("https://gen.pollinations.ai/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -140,9 +144,7 @@ export async function POST(req: NextRequest) {
             body: JSON.stringify({
                 model: model,
                 messages: finalPayload,
-                stream: false,
-                frequency_penalty: 0.2,
-                presence_penalty: 0.2
+                stream: false
             })
         });
 
@@ -156,8 +158,32 @@ export async function POST(req: NextRequest) {
         const assistantMessage = data.choices[0].message;
         const reasoning = assistantMessage.reasoning_content || assistantMessage.thinking?.text || null;
 
-        // Do NOT save to disk. Just return response.
-        return NextResponse.json({ content: assistantMessage.content, reasoning });
+        let content = assistantMessage.content || "";
+
+        // Basic deduplication: Check if the text is exactly repeated twice (A+A)
+        if (content.length > 20) {
+            const trimmed = content.trim();
+            const half = Math.floor(trimmed.length / 2);
+            const firstHalf = trimmed.slice(0, half);
+            const secondHalf = trimmed.slice(half);
+
+            // Check exact string match
+            if (firstHalf === secondHalf) {
+                content = firstHalf;
+            } else {
+                // Check if repeated with a newline separator (A+\n+A)
+                // This covers "Hello\nHello" where length is 2*len(A)+1
+                if (trimmed.length % 2 !== 0) { // odd length implies separator?
+                    // If we split by newline, do we get identical parts?
+                    const parts = trimmed.split(/\n+/);
+                    if (parts.length === 2 && parts[0].trim() === parts[1].trim()) {
+                        content = parts[0];
+                    }
+                }
+            }
+        }
+
+        return NextResponse.json({ content, reasoning });
 
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
