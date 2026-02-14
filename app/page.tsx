@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Sparkles, RotateCw, Upload } from "lucide-react";
+import { Sparkles, RotateCw, Upload, CreditCard, Calendar } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import React from "react";
 
@@ -35,7 +35,7 @@ export default function ChatPage() {
     const [currentChatId, setCurrentChatId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [loadingStatus, setLoadingStatus] = useState("");
-    const [pollenBalance, setPollenBalance] = useState<number | null>(null);
+    const [balanceData, setBalanceData] = useState<{ balance: number; tier: string; dailyPollen: number } | null>(null);
     const [isRefreshingBalance, setIsRefreshingBalance] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState<{ file: File; type: string; preview?: string }[]>([]);
     const [showReasoning, setShowReasoning] = useState<Record<string, boolean>>({});
@@ -71,7 +71,9 @@ export default function ChatPage() {
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    setPollenBalance(data.balance);
+                    setBalanceData(data);
+                } else {
+                    console.error("Failed to load balance");
                 }
             } catch (e) {
                 console.error("Error fetching balance:", e);
@@ -447,8 +449,6 @@ export default function ChatPage() {
                 }
             }
 
-            setIsLoading(false);
-
             // Refresh balance
             try {
                 const balRes = await fetch("/api/balance", {
@@ -456,7 +456,7 @@ export default function ChatPage() {
                 });
                 if (balRes.ok) {
                     const balData = await balRes.json();
-                    setPollenBalance(balData.balance);
+                    setBalanceData(balData);
                 }
             } catch (e) {
                 console.error("Error updating balance:", e);
@@ -540,17 +540,30 @@ export default function ChatPage() {
                         />
                     </div>
 
-                    {/* Pollen Balance */}
-                    <div className="flex items-center gap-1 md:gap-2 pr-1 md:pr-2">
+                    {/* Pollen Balance Display */}
+                    <div className="flex items-center gap-2 md:gap-3 pr-1 md:pr-2">
+                        {/* Daily Limit (Pollen) */}
+                        <div className="hidden md:flex flex-col items-end">
+                            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-0.5">{t.dailyLimit}</span>
+                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20">
+                                <Calendar size={10} className="text-emerald-500" />
+                                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                                    {balanceData?.dailyPollen !== undefined ? balanceData.dailyPollen : "---"}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Credits Balance (Total) */}
                         <div className="flex flex-col items-end">
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1 hidden sm:block">{t.pollenBalance}</span>
-                            <div className="flex items-center gap-1.5 px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 shadow-sm group/balance transition-all hover:bg-orange-100 dark:hover:bg-orange-500/20">
-                                <span className="text-[11px] md:text-sm font-black text-orange-600 dark:text-orange-400">
-                                    {pollenBalance !== null ? pollenBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "---"}
+                            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-0.5">{t.credits}</span>
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 shadow-sm group/balance transition-all hover:bg-orange-100 dark:hover:bg-orange-500/20">
+                                <span className="text-[11px] md:text-xs font-black text-orange-600 dark:text-orange-400">
+                                    {balanceData?.balance !== undefined ? balanceData.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "---"}
                                 </span>
                                 <Sparkles size={11} className="text-orange-500 animate-pulse hidden xs:block" />
                             </div>
                         </div>
+
                         <button
                             onClick={async () => {
                                 setIsRefreshingBalance(true);
@@ -560,7 +573,7 @@ export default function ChatPage() {
                                     });
                                     if (res.ok) {
                                         const data = await res.json();
-                                        setPollenBalance(data.balance);
+                                        setBalanceData(data);
                                     }
                                 } finally {
                                     setIsRefreshingBalance(false);
@@ -614,6 +627,6 @@ export default function ChatPage() {
                 }}
                 onClose={() => setShowApiKeyModal(false)}
             />
-        </div >
+        </div>
     );
 }

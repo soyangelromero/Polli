@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Paperclip, Send, Square, FileText, Trash2 } from "lucide-react";
+import { Paperclip, Send, Square, FileText, Trash2, AudioLines } from "lucide-react";
 import React from "react";
 
 interface ChatInputProps {
@@ -60,6 +60,11 @@ export const ChatInput = React.memo(function ChatInput({
                                         {file.type === "image" ? (
                                             // eslint-disable-next-line @next/next/no-img-element
                                             <img src={file.preview} alt="preview" className="w-full h-full object-cover" />
+                                        ) : file.type === "audio" ? (
+                                            <div className="w-full h-full flex flex-col items-center justify-center p-1 text-center bg-emerald-50 dark:bg-emerald-900/20">
+                                                <AudioLines size={20} className="text-emerald-500 mb-0.5" />
+                                                <span className="text-[9px] font-bold truncate w-full px-1 text-emerald-600 dark:text-emerald-400">{file.file.name}</span>
+                                            </div>
                                         ) : (
                                             <div className="w-full h-full flex flex-col items-center justify-center p-1 text-center">
                                                 <FileText size={20} className="text-claude-accent mb-0.5" />
@@ -91,7 +96,7 @@ export const ChatInput = React.memo(function ChatInput({
                                 onChange={handleFileUpload}
                                 className="hidden"
                                 multiple
-                                accept="image/*,application/pdf"
+                                accept="image/*,application/pdf,audio/*"
                             />
                         </button>
 
