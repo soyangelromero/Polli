@@ -53,67 +53,69 @@ export function ModelSelectionModal({ show, onSelect, t, language }: ModelSelect
     return (
         <AnimatePresence>
             {show && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 lg:p-10">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-6 lg:p-10">
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/60 backdrop-blur-md"
+                        className="fixed inset-0 bg-black/80 backdrop-blur-md"
                     />
 
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        className="relative w-full max-w-5xl h-[85vh] bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl border border-white/10 overflow-hidden flex flex-col"
+                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                        className="relative w-full max-w-5xl h-full md:h-[85vh] bg-white dark:bg-gray-900 md:rounded-[2.5rem] shadow-2xl border border-white/10 overflow-hidden flex flex-col"
                     >
                         {/* Header */}
-                        <div className="p-8 pb-4 flex flex-col gap-6 shrink-0 bg-gradient-to-b from-gray-50/50 dark:from-gray-800/20 to-transparent">
+                        <div className="p-6 md:p-8 pb-4 flex flex-col gap-4 md:gap-6 shrink-0 bg-gradient-to-b from-gray-50/50 dark:from-gray-800/20 to-transparent">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-3">
-                                        <Sparkles className="text-claude-accent animate-pulse" />
+                                    <h2 className="text-xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-2 md:gap-3">
+                                        <Sparkles className="text-claude-accent animate-pulse w-5 h-5 md:w-6 md:h-6" />
                                         {language === "es" ? "Selecciona tu Modelo" : "Select your Model"}
                                     </h2>
-                                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 font-medium tracking-wide">
+                                    <p className="mt-1 text-[10px] md:text-sm text-gray-500 dark:text-gray-400 font-medium tracking-wide">
                                         {language === "es" ? "Elige el motor que potenciará tu próxima sesión" : "Choose the engine for your next session"}
                                     </p>
                                 </div>
                             </div>
 
                             {/* Controls: Category Tabs & Search */}
-                            <div className="flex flex-col md:flex-row items-center gap-4">
-                                <div className="flex p-1.5 bg-gray-100 dark:bg-gray-800/50 rounded-2xl w-full md:w-auto">
-                                    {MODEL_CATEGORIES.map((cat) => (
-                                        <button
-                                            key={cat.key}
-                                            onClick={() => setActiveCategory(cat.key)}
-                                            className={`flex items-center justify-center gap-2 py-2.5 px-6 text-xs font-black uppercase tracking-widest transition-all rounded-xl relative ${activeCategory === cat.key
-                                                ? "bg-white dark:bg-gray-700 text-claude-accent shadow-sm"
-                                                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                                                }`}
-                                        >
-                                            <cat.icon size={16} />
-                                            <span>{language === "es" ? cat.labelEs : cat.labelEn}</span>
-                                        </button>
-                                    ))}
+                            <div className="flex flex-col gap-4">
+                                <div className="flex p-1 bg-gray-100 dark:bg-gray-800/50 rounded-2xl w-full overflow-x-auto scrollbar-hide">
+                                    <div className="flex min-w-max md:min-w-0 md:flex-1">
+                                        {MODEL_CATEGORIES.map((cat) => (
+                                            <button
+                                                key={cat.key}
+                                                onClick={() => setActiveCategory(cat.key)}
+                                                className={`flex items-center justify-center gap-2 py-2 md:py-2.5 px-4 md:px-6 text-[10px] md:text-xs font-black uppercase tracking-widest transition-all rounded-xl relative whitespace-nowrap ${activeCategory === cat.key
+                                                    ? "bg-white dark:bg-gray-700 text-claude-accent shadow-sm"
+                                                    : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                                    }`}
+                                            >
+                                                <cat.icon size={14} className="md:w-4 md:h-4" />
+                                                <span>{language === "es" ? cat.labelEs : cat.labelEn}</span>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
 
-                                <div className="relative flex-1 w-full">
-                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                <div className="relative w-full">
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                                     <input
                                         type="text"
                                         placeholder={language === "es" ? "Buscar modelos..." : "Search models..."}
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full pl-12 pr-4 py-3.5 bg-gray-100 dark:bg-gray-800/50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-claude-accent transition-all dark:text-white outline-none"
+                                        className="w-full pl-12 pr-4 py-3 bg-gray-100 dark:bg-gray-800/50 border-none rounded-2xl text-xs md:text-sm focus:ring-2 focus:ring-claude-accent transition-all dark:text-white outline-none"
                                     />
                                 </div>
                             </div>
                         </div>
 
                         {/* Model Grid */}
-                        <div className="flex-1 overflow-y-auto p-8 pt-4 custom-scrollbar">
+                        <div className="flex-1 overflow-y-auto p-4 md:p-8 pt-2 custom-scrollbar">
                             {/* Pollen Section */}
                             {pollen.length > 0 && (
                                 <div className="mb-10">

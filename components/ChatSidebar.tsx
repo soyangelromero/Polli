@@ -1,4 +1,4 @@
-import { Plus, MessageSquare, Trash2 } from "lucide-react";
+import { Plus, MessageSquare, Trash2, X } from "lucide-react";
 import { Chat } from "../lib/types"; // We need to define types somewhere or inline them
 import React, { useMemo } from "react";
 
@@ -12,6 +12,8 @@ interface ChatSidebarProps {
     language: "en" | "es";
     setLanguage: (lang: "en" | "es") => void;
     onLogout: () => void;
+    isOpen?: boolean;
+    onClose?: () => void;
 }
 
 export const ChatSidebar = React.memo(function ChatSidebar({
@@ -23,7 +25,9 @@ export const ChatSidebar = React.memo(function ChatSidebar({
     deleteChat,
     language,
     setLanguage,
-    onLogout
+    onLogout,
+    isOpen,
+    onClose
 }: ChatSidebarProps) {
     const [searchTerm, setSearchTerm] = React.useState("");
     // We can also memoize the filtered list inside
@@ -33,81 +37,109 @@ export const ChatSidebar = React.memo(function ChatSidebar({
     );
 
     return (
-        <div className="w-72 bg-claude-sidebar/80 backdrop-blur-xl hidden md:flex flex-col border-r border-white/[0.04] transition-all z-30">
-            <div className="p-4">
-                <button
-                    onClick={createNewChat}
-                    className="w-full h-12 flex items-center justify-start gap-3 px-4 rounded-xl border border-gray-300 dark:border-gray-700 hover:bg-white/50 dark:hover:bg-white/5 transition-all font-medium text-gray-700 dark:text-gray-200"
-                >
-                    <Plus size={20} className="text-claude-accent" />
-                    <span>{t.newChat}</span>
-                </button>
-                <div className="mt-4 relative">
-                    <input
-                        type="text"
-                        placeholder={t.searchHistory}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full h-10 pl-9 pr-4 rounded-xl bg-gray-200/50 dark:bg-gray-800/50 border-none text-xs font-medium focus:ring-1 focus:ring-claude-accent/30 transition-all outline-none"
-                    />
-                    <MessageSquare size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                </div>
-            </div>
-            <div className="flex-1 overflow-y-auto px-3 space-y-1 pb-4">
-                <div className="text-[11px] font-bold text-gray-400 px-3 py-2 uppercase tracking-[0.1em] flex justify-between items-center">
-                    <span>{t.conversations}</span>
-                </div>
-                {filteredChats.map((chat) => (
-                    <div
-                        key={chat.id}
-                        onClick={() => setCurrentChatId(chat.id)}
-                        className={`group flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all ${currentChatId === chat.id ? "bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700" : "hover:bg-gray-200/50 dark:hover:bg-gray-800/50 text-gray-600 dark:text-gray-400"}`}
+        <>
+            {/* Backdrop for mobile */}
+            {isOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+                    onClick={onClose}
+                />
+            )}
+
+            <div className={`
+                fixed inset-y-0 left-0 w-72 md:relative md:w-72 
+                bg-claude-sidebar/80 backdrop-blur-xl flex flex-col border-r border-white/[0.04] 
+                transition-transform duration-300 ease-in-out z-50 md:z-30
+                ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+                ${!isOpen && "hidden md:flex"}
+            `}>
+                <div className="p-4">
+                    <div className="flex items-center justify-between mb-4 md:hidden">
+                        <span className="font-bold text-claude-accent uppercase tracking-widest text-xs">Menú</span>
+                        <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-400">
+                            <X size={20} />
+                        </button>
+                    </div>
+
+                    <button
+                        onClick={createNewChat}
+                        className="w-full h-12 flex items-center justify-start gap-3 px-4 rounded-xl border border-gray-300 dark:border-gray-700 hover:bg-white/50 dark:hover:bg-white/5 transition-all font-medium text-gray-700 dark:text-gray-200"
                     >
-                        <MessageSquare size={17} className={currentChatId === chat.id ? "text-claude-accent" : "text-gray-400"} />
-                        <div className="flex-1 truncate text-sm font-medium pr-1">
-                            {chat.title}
-                        </div>
-                        <button
-                            onClick={(e) => deleteChat(chat.id, e)}
-                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-md transition-all text-gray-400 hover:text-red-500"
-                        >
-                            <Trash2 size={14} />
-                        </button>
-                    </div>
-                ))}
-                {filteredChats.length === 0 && (
-                    <div className="text-sm text-gray-400 px-3 py-10 text-center italic">No hay chats aún</div>
-                )}
-            </div>
-
-            {/* Sidebar Footer */}
-            <div className="p-4 border-t dark:border-gray-800 bg-claude-sidebar/50 space-y-2">
-                <div className="px-3 pb-2">
-                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">{t.language}</div>
-                    <div className="flex bg-gray-200/50 dark:bg-gray-800/50 rounded-lg p-1">
-                        <button
-                            onClick={() => setLanguage("en")}
-                            className={`flex-1 py-1 text-[10px] font-bold rounded-md transition-all ${language === 'en' ? 'bg-white dark:bg-gray-700 shadow-sm text-claude-accent' : 'text-gray-400'}`}
-                        >
-                            EN
-                        </button>
-                        <button
-                            onClick={() => setLanguage("es")}
-                            className={`flex-1 py-1 text-[10px] font-bold rounded-md transition-all ${language === 'es' ? 'bg-white dark:bg-gray-700 shadow-sm text-claude-accent' : 'text-gray-400'}`}
-                        >
-                            ES
-                        </button>
+                        <Plus size={20} className="text-claude-accent" />
+                        <span>{t.newChat}</span>
+                    </button>
+                    {/* ... (rest of search history) */}
+                    <div className="mt-4 relative">
+                        <input
+                            type="text"
+                            placeholder={t.searchHistory}
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full h-10 pl-9 pr-4 rounded-xl bg-gray-200/50 dark:bg-gray-800/50 border-none text-xs font-medium focus:ring-1 focus:ring-claude-accent/30 transition-all outline-none"
+                        />
+                        <MessageSquare size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     </div>
                 </div>
-                <button
-                    onClick={onLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-all text-xs font-bold"
-                >
-                    <Trash2 size={16} />
-                    <span>{t.logoutBtn}</span>
-                </button>
+                {/* ... (rest of the component) */}
+                <div className="flex-1 overflow-y-auto px-3 space-y-1 pb-4">
+                    <div className="text-[11px] font-bold text-gray-400 px-3 py-2 uppercase tracking-[0.1em] flex justify-between items-center">
+                        <span>{t.conversations}</span>
+                    </div>
+                    {filteredChats.map((chat) => (
+                        <div
+                            key={chat.id}
+                            onClick={() => {
+                                setCurrentChatId(chat.id);
+                                if (onClose) onClose();
+                            }}
+                            className={`group flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all ${currentChatId === chat.id ? "bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700" : "hover:bg-gray-200/50 dark:hover:bg-gray-800/50 text-gray-600 dark:text-gray-400"}`}
+                        >
+                            <MessageSquare size={17} className={currentChatId === chat.id ? "text-claude-accent" : "text-gray-400"} />
+                            <div className="flex-1 truncate text-sm font-medium pr-1">
+                                {chat.title}
+                            </div>
+                            <button
+                                onClick={(e) => deleteChat(chat.id, e)}
+                                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-md transition-all text-gray-400 hover:text-red-500"
+                            >
+                                <Trash2 size={14} />
+                            </button>
+                        </div>
+                    ))}
+                    {filteredChats.length === 0 && (
+                        <div className="text-sm text-gray-400 px-3 py-10 text-center italic">No hay chats aún</div>
+                    )}
+                </div>
 
+                {/* Sidebar Footer */}
+                <div className="p-4 border-t dark:border-gray-800 bg-claude-sidebar/50 space-y-2">
+                    <div className="px-3 pb-2">
+                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">{t.language}</div>
+                        <div className="flex bg-gray-200/50 dark:bg-gray-800/50 rounded-lg p-1">
+                            <button
+                                onClick={() => setLanguage("en")}
+                                className={`flex-1 py-1 text-[10px] font-bold rounded-md transition-all ${language === 'en' ? 'bg-white dark:bg-gray-700 shadow-sm text-claude-accent' : 'text-gray-400'}`}
+                            >
+                                EN
+                            </button>
+                            <button
+                                onClick={() => setLanguage("es")}
+                                className={`flex-1 py-1 text-[10px] font-bold rounded-md transition-all ${language === 'es' ? 'bg-white dark:bg-gray-700 shadow-sm text-claude-accent' : 'text-gray-400'}`}
+                            >
+                                ES
+                            </button>
+                        </div>
+                    </div>
+                    <button
+                        onClick={onLogout}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-all text-xs font-bold"
+                    >
+                        <Trash2 size={16} />
+                        <span>{t.logoutBtn}</span>
+                    </button>
+
+                </div>
             </div>
-        </div>
+        </>
     );
 });

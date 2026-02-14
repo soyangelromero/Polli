@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Sparkles, RotateCw, Upload, CreditCard, Calendar } from "lucide-react";
+import { Sparkles, RotateCw, Upload, CreditCard, Calendar, Menu } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import React from "react";
 
@@ -42,6 +42,7 @@ export default function ChatPage() {
     const [attachedFiles, setAttachedFiles] = useState<{ file: File; type: string; preview?: string }[]>([]);
     const [showReasoning, setShowReasoning] = useState<Record<string, boolean>>({});
     const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const dragCounter = useRef(0);
     const [language, setLanguage] = useState<"en" | "es">("en");
@@ -550,7 +551,10 @@ export default function ChatPage() {
                 currentChatId={currentChatId}
                 t={t}
                 createNewChat={createNewChat}
-                setCurrentChatId={setCurrentChatId}
+                setCurrentChatId={useCallback((id) => {
+                    setCurrentChatId(id);
+                    setIsSidebarOpen(false); // Close sidebar on selection
+                }, [])}
                 deleteChat={deleteChat}
                 language={language}
                 setLanguage={useCallback((lang) => {
@@ -563,6 +567,8 @@ export default function ChatPage() {
                         window.location.reload();
                     }
                 }, [t.logoutConfirm])}
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
             />
 
             {/* Main Chat */}
@@ -570,6 +576,14 @@ export default function ChatPage() {
                 {/* Header */}
                 <header className="h-14 flex items-center justify-between px-4 md:px-6 border-b border-white/[0.04] bg-claude-bg/80 backdrop-blur-xl z-20 shrink-0">
                     <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                        {/* Mobile Menu Button */}
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            className="md:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors"
+                        >
+                            <Menu size={20} />
+                        </button>
+
                         <span className="font-semibold text-claude-accent tracking-tight text-base cursor-default hidden xs:block">POLLI</span>
                         <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-700 hidden xs:block"></div>
                         <h1 className="font-semibold text-xs md:text-sm truncate max-w-[100px] md:max-w-md text-gray-600 dark:text-gray-300 mr-2">
