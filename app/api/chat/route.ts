@@ -160,25 +160,20 @@ export async function POST(req: NextRequest) {
 
         let content = assistantMessage.content || "";
 
-        // Basic deduplication: Check if the text is exactly repeated twice (A+A)
-        if (content.length > 20) {
+        // Deduplication Logic
+        if (content.length > 5) {
             const trimmed = content.trim();
-            const half = Math.floor(trimmed.length / 2);
-            const firstHalf = trimmed.slice(0, half);
-            const secondHalf = trimmed.slice(half);
-
-            // Check exact string match
-            if (firstHalf === secondHalf) {
-                content = firstHalf;
+            // Check if repeated with a newline separator (A+\n+A)
+            const parts = trimmed.split(/\n+/);
+            if (parts.length === 2 && parts[0].trim() === parts[1].trim()) {
+                content = parts[0];
             } else {
-                // Check if repeated with a newline separator (A+\n+A)
-                // This covers "Hello\nHello" where length is 2*len(A)+1
-                if (trimmed.length % 2 !== 0) { // odd length implies separator?
-                    // If we split by newline, do we get identical parts?
-                    const parts = trimmed.split(/\n+/);
-                    if (parts.length === 2 && parts[0].trim() === parts[1].trim()) {
-                        content = parts[0];
-                    }
+                // Check exact string match (A+A)
+                const half = Math.floor(trimmed.length / 2);
+                const firstHalf = trimmed.slice(0, half);
+                const secondHalf = trimmed.slice(half);
+                if (firstHalf === secondHalf) {
+                    content = firstHalf;
                 }
             }
         }
