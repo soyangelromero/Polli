@@ -21,6 +21,7 @@ import { Chat, Message } from "../../lib/types";
 import { MODELS, TRANSLATIONS, TEXT_MODELS } from "../../lib/constants";
 import { ChatInput } from "../../components/ChatInput";
 import { ApiKeyModal } from "../../components/ApiKeyModal";
+import DebugConsole, { LogEntry } from "../../components/DebugConsole";
 
 import { VibeEditor } from "../../components/VibeEditor";
 
@@ -32,6 +33,20 @@ export default function VibePage() {
     const [isLoading, setIsLoading] = useState(false);
     const [activeCode, setActiveCode] = useState("");
     const [activeLang, setActiveLang] = useState("");
+
+    // Debug Console State
+    const [logs, setLogs] = useState<LogEntry[]>([]);
+    const [isDebugOpen, setIsDebugOpen] = useState(false);
+
+    const addLog = (type: 'info' | 'error' | 'request' | 'response', title: string, data?: any) => {
+        setLogs(prev => [...prev, {
+            id: Date.now().toString() + Math.random().toString().slice(2),
+            timestamp: new Date(),
+            type,
+            title,
+            data
+        }]);
+    };
 
     const [language, setLanguage] = useState<'en' | 'es'>('es');
     const [balanceData, setBalanceData] = useState<{ balance: number; tier: string; dailyPollen: number; credits?: number } | null>(null);
@@ -155,17 +170,18 @@ export default function VibePage() {
         let chatModel = selectedModelId;
 
         if (!chatId) {
+            const newId = Date.now().toString();
             const newChat: Chat = {
-                id: Date.now().toString(),
+                id: newId,
                 title: "Vibe Session",
                 model: chatModel,
                 messages: [],
                 createdAt: Date.now(),
             };
             updatedChats = [newChat, ...updatedChats];
-            chatId = newChat.id;
+            chatId = newId;
             setChats(updatedChats);
-            setCurrentChatId(chatId);
+            setCurrentChatId(newId);
         }
 
         const userMsg: Message = {
@@ -184,34 +200,49 @@ export default function VibePage() {
         const controller = new AbortController();
         abortControllerRef.current = controller;
 
+        const systemPrompt = "You are VibeHub-Coder, a world-class senior software engineer. " +
+            "You provide extremely high-quality code. Always wrap code in triple backticks with the language identifier. " +
+            "Focus on clean, secure, and performant solutions. Use modern standards.";
+
+        const requestBody = {
+            chatId: chatId,
+            model: chatModel,
+            messages: [
+                { role: "system", content: systemPrompt },
+                ...updatedChats[chatIndex].messages.map(m => ({ role: m.role, content: m.content }))
+            ],
+            files: [],
+            stream: true
+        };
+
+        addLog('request', `Vibe Request: ${chatModel}`, requestBody);
+
         try {
-            const systemPrompt = "You are VibeHub-Coder, a world-class senior software engineer. " +
-                "You provide extremely high-quality code. Always wrap code in triple backticks with the language identifier. " +
-                "Focus on clean, secure, and performant solutions. Use modern standards.";
-
-            const requestBody = {
-                chatId: chatId,
-                model: chatModel,
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    ...updatedChats[chatIndex].messages.map(m => ({ role: m.role, content: m.content }))
-                ],
-                files: []
-            };
-
-            const response = await fetch("/api/chat", {
+            const res = await fetch("/api/chat", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "x-api-key": userApiKey || ""
                 },
-                signal: controller.signal,
                 body: JSON.stringify(requestBody),
+                signal: controller.signal
             });
 
-            if (!response.ok) throw new Error("API Error");
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                addLog('error', `API Error ${res.status}`, data);
+                const errorMsg: Message = {
+                    id: (Date.now() + 1).toString(),
+                    role: "assistant",
+                    content: `Error: ${data.error || data.info || "Generation failed"}`,
+                    modelId: chatModel
+                };
+                setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: [...c.messages, errorMsg] } : c));
+                return;
+            }
 
-            const reader = response.body?.getReader();
+            addLog('info', 'Stream started');
+            const reader = res.body?.getReader();
             const decoder = new TextDecoder();
             let aiContent = "";
 
@@ -238,14 +269,17 @@ export default function VibePage() {
 
                 for (const line of lines) {
                     if (line.startsWith("data: ")) {
-                        const data = line.slice(6);
-                        if (data === "[DONE]") break;
+                        const dataStr = line.slice(6);
+                        if (dataStr === "[DONE]") {
+                            addLog('response', 'Stream [DONE]', { length: aiContent.length });
+                            break;
+                        }
                         try {
-                            const parsed = JSON.parse(data);
+                            const parsed = JSON.parse(dataStr);
                             const content = parsed.choices[0]?.delta?.content || "";
                             aiContent += content;
 
-                            setChats(prev => {
+                            setChats((prev: Chat[]) => {
                                 const newChats = [...prev];
                                 const currentChatIdx = newChats.findIndex(c => c.id === chatId);
                                 if (currentChatIdx !== -1) {
@@ -256,12 +290,32 @@ export default function VibePage() {
                                 }
                                 return newChats;
                             });
+
+                            // Extract code for canvas (real-time)
+                            if (aiContent.includes("```")) {
+                                const parts = aiContent.split("```");
+                                if (parts.length >= 2) {
+                                    const partialBlock = parts[1];
+                                    const lines = partialBlock.split("\n");
+                                    const lang = lines[0].trim();
+                                    const code = lines.slice(1).join("\n");
+                                    setActiveCode(code);
+                                    if (lang && lang.length < 20) { // Basic check to ensure it's a language ID
+                                        setActiveLang(lang);
+                                    }
+                                }
+                            }
                         } catch (e) { }
                     }
                 }
             }
-        } catch (error) {
-            console.error(error);
+        } catch (error: any) {
+            if (error.name === "AbortError") {
+                addLog('info', 'Generation Aborted');
+            } else {
+                addLog('error', 'Vibe Fatal Error', error.message || error);
+                console.error(error);
+            }
         } finally {
             setIsLoading(false);
             abortControllerRef.current = null;
@@ -470,6 +524,14 @@ export default function VibePage() {
                     setUserApiKey(key);
                 }}
                 onClose={() => { }}
+            />
+
+            {/* Debug Console */}
+            <DebugConsole
+                logs={logs}
+                isOpen={isDebugOpen}
+                onToggle={() => setIsDebugOpen(!isDebugOpen)}
+                onClear={() => setLogs([])}
             />
         </div>
     );

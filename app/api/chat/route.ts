@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { messages, files, model = "claude-large" } = body;
+        const { messages, files, model = "claude-large", stream = false } = body;
 
         // Security: Validate file limits
         if (files && files.length > 5) {
@@ -106,7 +106,6 @@ export async function POST(req: NextRequest) {
         if (files && files.length > 0) {
             let contentParts: any[] = [{ type: "text", text: lastMessage.content }];
             for (const file of files) {
-                // Security: Max file size ~5MB (in base64, 5MB is approx 6.7MB string length)
                 if (file.data && file.data.length > 7000000) {
                     return NextResponse.json(
                         { error: `File ${file.name} is too large. Limit is 5MB.` },
@@ -117,13 +116,10 @@ export async function POST(req: NextRequest) {
                 if (file.type === "image") {
                     contentParts.push({ type: "image_url", image_url: { url: file.url } });
                 } else if (file.type === "file") {
-                    // Models that support native PDF/file uploads in Pollinations
                     const nativeFileSupport = ["claude-large", "gemini-fast", "gemini-search", "gemini", "gemini-large", "gemini-legacy"];
-
                     if (nativeFileSupport.includes(model)) {
                         contentParts.push({ type: "file", file: { file_data: file.data, file_name: file.name, mime_type: "application/pdf" } });
                     } else {
-                        // Transcribe but don't save to disk
                         const transcription = await transcribePdfWithClaude(file.data, file.name, apiKey);
                         contentParts.push({ type: "text", text: `\n\n[DOCUMENTO: ${file.name}]\n${transcription}\n[FIN]\n` });
                     }
@@ -132,13 +128,11 @@ export async function POST(req: NextRequest) {
             lastMessage.content = contentParts;
         }
 
-        // Avoid duplicating system prompt if already present in history
         const hasSystemMessage = prunedMessages.some((m: any) => m.role === "system");
         const finalPayload = hasSystemMessage ? prunedMessages : [systemMessage, ...prunedMessages];
 
         console.log("--- POLLINATIONS CHAT REQUEST ---");
-        console.log("Model:", model);
-        console.log("Messages:", JSON.stringify(finalPayload, null, 2));
+        console.log("Model:", model, "Stream:", stream);
 
         const response = await fetch("https://gen.pollinations.ai/v1/chat/completions", {
             method: "POST",
@@ -149,43 +143,73 @@ export async function POST(req: NextRequest) {
             body: JSON.stringify({
                 model: model,
                 messages: finalPayload,
-                stream: false
+                stream: stream
             })
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            const errorMessage = errorData.error?.message || errorData.error || errorData.message || JSON.stringify(errorData);
+            const errorData = await response.json().catch(() => ({}));
+            const errorMessage = errorData.error?.message || errorData.error || errorData.message || "Pollinations API Error";
             return NextResponse.json({ error: errorMessage }, { status: response.status });
         }
 
+        // ─── STREAMING RESPONSE ───
+        if (stream) {
+            const encoder = new TextEncoder();
+            const decoder = new TextDecoder();
+
+            const streamResponse = new ReadableStream({
+                async start(controller) {
+                    const reader = response.body?.getReader();
+                    if (!reader) {
+                        controller.close();
+                        return;
+                    }
+
+                    try {
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+                            const chunk = decoder.decode(value);
+                            controller.enqueue(encoder.encode(chunk));
+                        }
+                    } catch (e) {
+                        controller.error(e);
+                    } finally {
+                        controller.close();
+                    }
+                },
+            });
+
+            return new Response(streamResponse, {
+                headers: { "Content-Type": "text/event-stream" },
+            });
+        }
+
+        // ─── NON-STREAMING RESPONSE ───
         const data = await response.json();
         const assistantMessage = data.choices[0].message;
         const reasoning = assistantMessage.reasoning_content || assistantMessage.thinking?.text || null;
-
         let content = assistantMessage.content || "";
 
         // Deduplication Logic
         if (content.length > 5) {
             const trimmed = content.trim();
-            // Check if repeated with a newline separator (A+\n+A)
             const parts = trimmed.split(/\n+/);
             if (parts.length === 2 && parts[0].trim() === parts[1].trim()) {
                 content = parts[0];
             } else {
-                // Check exact string match (A+A)
                 const half = Math.floor(trimmed.length / 2);
                 const firstHalf = trimmed.slice(0, half);
                 const secondHalf = trimmed.slice(half);
-                if (firstHalf === secondHalf) {
-                    content = firstHalf;
-                }
+                if (firstHalf === secondHalf) content = firstHalf;
             }
         }
 
         return NextResponse.json({ content, reasoning });
 
     } catch (error: any) {
+        console.error("Chat API Error:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
