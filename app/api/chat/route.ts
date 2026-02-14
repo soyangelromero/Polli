@@ -31,7 +31,7 @@ async function transcribePdfWithClaude(fileData: string, fileName: string, apiKe
                 "Authorization": `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: "claude-large",
+                model: "gemini-fast",
                 messages: [
                     {
                         role: "user",
@@ -117,7 +117,10 @@ export async function POST(req: NextRequest) {
                 if (file.type === "image") {
                     contentParts.push({ type: "image_url", image_url: { url: file.url } });
                 } else if (file.type === "file") {
-                    if (model === "claude-large") {
+                    // Models that support native PDF/file uploads in Pollinations
+                    const nativeFileSupport = ["claude-large", "gemini-fast", "gemini-search", "gemini", "gemini-large", "gemini-legacy"];
+
+                    if (nativeFileSupport.includes(model)) {
                         contentParts.push({ type: "file", file: { file_data: file.data, file_name: file.name, mime_type: "application/pdf" } });
                     } else {
                         // Transcribe but don't save to disk
