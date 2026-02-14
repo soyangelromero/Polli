@@ -70,20 +70,6 @@ export const ChatSidebar = React.memo(function ChatSidebar({
                             <span>{t.newChat}</span>
                         </button>
 
-                        <a
-                            href="/vibe"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full h-12 flex items-center justify-start gap-3 px-4 rounded-xl border border-claude-accent/20 bg-claude-accent/5 hover:bg-claude-accent/10 transition-all font-bold text-claude-accent group"
-                        >
-                            <div className="p-1.5 rounded-lg bg-claude-accent text-white group-hover:scale-110 transition-transform">
-                                <Plus size={16} className="rotate-45" />
-                            </div>
-                            <div className="flex flex-col items-start leading-none">
-                                <span className="text-sm">{t.vibeHub}</span>
-                                <span className="text-[9px] opacity-60 font-medium uppercase tracking-tighter mt-0.5">{t.vibeHubDesc}</span>
-                            </div>
-                        </a>
                     </div>
                     {/* ... (rest of search history) */}
                     <div className="mt-4 relative">
