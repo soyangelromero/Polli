@@ -1,18 +1,11 @@
 import { motion, AnimatePresence } from "framer-motion";
 import React from "react";
-import { User, Brain, ChevronUp, ChevronDown, ImageIcon, FileText } from "lucide-react";
+import { User, Brain, ChevronUp, ChevronDown, ImageIcon, FileText, Download, Play } from "lucide-react";
 import dynamic from "next/dynamic";
 import remarkGfm from "remark-gfm";
-// Issue #1: Sanitize input (although ReactMarkdown handles most, explicit plugins can be better, 
-// but for now we follow the plan to just use ReactMarkdown + GFM and ensure it's here).
-// Note: For strict XSS prevention with rehype-sanitize, we'd need to install it. 
-// Given the dependencies list, we only have 'remark-gfm'. 
-// I will proceed with what is available, but I'll add 'rehype-sanitize' to the plan if needed or just use default escaping which ReactMarkdown provides.
-// Actually, I'll stick to the current deps to avoid breaking the build if the user didn't install new packages.
-// ReactMarkdown escapes HTML by default.
 
 import { Chat, Message } from "../lib/types";
-import { MODELS } from "../lib/constants";
+import { MODELS, type ModelDef } from "../lib/constants";
 
 const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false });
 const CodeBlock = dynamic(() => import("./CodeBlock").then(mod => mod.CodeBlock), {
@@ -23,12 +16,79 @@ const CodeBlock = dynamic(() => import("./CodeBlock").then(mod => mod.CodeBlock)
 interface ChatWindowProps {
     messages: Message[];
     currentChat: Chat | undefined;
-    selectedModel: typeof MODELS[0];
+    selectedModel: ModelDef;
     t: any;
     isLoading: boolean;
+    loadingStatus: string;
     showReasoning: Record<string, boolean>;
     toggleReasoning: (msgId: string) => void;
     language: "en" | "es";
+}
+
+function MediaContent({ message, t }: { message: Message; t: any }) {
+    if (!message.mediaUrl) return null;
+
+    if (message.mediaType === "image") {
+        return (
+            <div className="mt-2 relative group/media rounded-2xl overflow-hidden inline-block max-w-full">
+                <img
+                    src={message.mediaUrl}
+                    alt={message.content?.toString() || "Generated image"}
+                    className="max-w-full max-h-[512px] rounded-2xl shadow-lg border border-black/5 dark:border-white/10"
+                />
+                <a
+                    href={message.mediaUrl}
+                    download="generated-image.png"
+                    className="absolute top-3 right-3 p-2 rounded-xl bg-black/50 text-white opacity-0 group-hover/media:opacity-100 transition-opacity duration-200 hover:bg-black/70"
+                    title={t.downloadMedia}
+                >
+                    <Download size={16} />
+                </a>
+            </div>
+        );
+    }
+
+    if (message.mediaType === "video") {
+        return (
+            <div className="mt-2 relative group/media rounded-2xl overflow-hidden inline-block max-w-full">
+                <video
+                    src={message.mediaUrl}
+                    controls
+                    className="max-w-full max-h-[512px] rounded-2xl shadow-lg border border-black/5 dark:border-white/10"
+                />
+                <a
+                    href={message.mediaUrl}
+                    download="generated-video.mp4"
+                    className="absolute top-3 right-3 p-2 rounded-xl bg-black/50 text-white opacity-0 group-hover/media:opacity-100 transition-opacity duration-200 hover:bg-black/70"
+                    title={t.downloadMedia}
+                >
+                    <Download size={16} />
+                </a>
+            </div>
+        );
+    }
+
+    if (message.mediaType === "audio") {
+        return (
+            <div className="mt-3 flex flex-col gap-2">
+                <audio
+                    src={message.mediaUrl}
+                    controls
+                    className="w-full max-w-md rounded-xl"
+                />
+                <a
+                    href={message.mediaUrl}
+                    download="generated-audio.mp3"
+                    className="inline-flex items-center gap-1.5 text-xs text-claude-accent hover:underline font-bold w-fit"
+                >
+                    <Download size={12} />
+                    {t.downloadMedia}
+                </a>
+            </div>
+        );
+    }
+
+    return null;
 }
 
 export const ChatWindow = React.memo(function ChatWindow({
@@ -37,21 +97,40 @@ export const ChatWindow = React.memo(function ChatWindow({
     selectedModel,
     t,
     isLoading,
+    loadingStatus,
     showReasoning,
     toggleReasoning,
     language
 }: ChatWindowProps) {
 
     if (!currentChat || messages.length === 0) {
+        const categoryLabel: Record<string, { en: string; es: string }> = {
+            text: { en: "Querying", es: "Consultando" },
+            image: { en: "Creating with", es: "Creando con" },
+            video: { en: "Generating with", es: "Generando con" },
+            audio: { en: "Using", es: "Usando" },
+        };
+        const label = categoryLabel[selectedModel.category] || categoryLabel.text;
+
         return (
             <div className="h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto px-6 animate-in fade-in zoom-in-95 duration-500 py-10">
                 <div className="w-12 h-12 md:w-16 md:h-16 bg-white dark:bg-gray-800 rounded-3xl flex items-center justify-center mb-6 md:mb-8 shadow-xl border border-gray-100 dark:border-gray-700">
                     <selectedModel.icon size={28} className={`${selectedModel.color} md:size-[34px]`} />
                 </div>
                 <h2 className="text-2xl md:text-4xl font-bold tracking-tight mb-3 text-gray-800 dark:text-gray-100">
-                    {language === 'en' ? `Querying ${selectedModel.name}` : `Consultando ${selectedModel.name}`}
+                    {language === 'en' ? `${label.en} ${selectedModel.name}` : `${label.es} ${selectedModel.name}`}
                 </h2>
                 <p className="text-gray-500 text-sm md:text-lg max-w-md">{t.dropInstruction}</p>
+
+                {/* Category hint */}
+                {selectedModel.category !== "text" && (
+                    <p className="mt-3 text-xs text-gray-400 italic">
+                        {language === "en"
+                            ? `This model generates ${selectedModel.category}. Enter a prompt to get started.`
+                            : `Este modelo genera ${selectedModel.category === "image" ? "imágenes" : selectedModel.category === "video" ? "videos" : "audio"}. Ingresa un prompt para comenzar.`
+                        }
+                    </p>
+                )}
             </div>
         );
     }
@@ -67,7 +146,7 @@ export const ChatWindow = React.memo(function ChatWindow({
                     key={m.id || `msg-${index}`}
                     className={`flex w-full gap-3 md:gap-4 ${m.role === "user" ? "flex-row-reverse" : "flex-row"}`}
                 >
-                    {/* Avatar - IA o Usuario */}
+                    {/* Avatar */}
                     <div className={`w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center shrink-0 shadow-sm border dark:border-white/10 ${m.role === "user" ? "bg-claude-accent text-white" : "bg-white dark:bg-gray-800"}`}>
                         {m.role === "user" ? (
                             <User size={18} />
@@ -87,6 +166,7 @@ export const ChatWindow = React.memo(function ChatWindow({
                                 : "bg-transparent p-0 md:pt-1 text-gray-800 dark:text-gray-200 max-w-none"
                                 }`}
                         >
+                            {/* Reasoning */}
                             {m.role === "assistant" && m.reasoning && (
                                 <div className="mb-3">
                                     <button
@@ -114,34 +194,77 @@ export const ChatWindow = React.memo(function ChatWindow({
                                 </div>
                             )}
 
-                            <div className="markdown-content prose dark:prose-invert max-w-none break-words leading-relaxed text-[15px] md:text-[16px] text-left w-full">
-                                <ReactMarkdown
-                                    remarkPlugins={[remarkGfm]}
-                                    components={{
-                                        code({ inline, className, children, ...props }: any) {
-                                            const match = /language-(\w+)/.exec(className || "");
-                                            return !inline && match ? (
-                                                <CodeBlock
-                                                    language={match[1]}
-                                                    value={String(children).replace(/\n$/, "")}
-                                                    {...props}
-                                                />
-                                            ) : (
-                                                <code className={className} {...props}>
-                                                    {children}
-                                                </code>
-                                            );
-                                        }
-                                    }}
-                                >
-                                    {typeof m.content === "string"
-                                        ? m.content
-                                        : (Array.isArray(m.content) as any)
-                                            ? (m.content as any[]).find((part: any) => part.type === "text")?.text || ""
-                                            : ""}
-                                </ReactMarkdown>
-                            </div>
+                            {/* Media content (images, video, audio) */}
+                            <MediaContent message={m} t={t} />
 
+                            {/* Text content */}
+                            {(typeof m.content === "string" && m.content && !m.mediaUrl) || (typeof m.content === "string" && m.content && m.role === "user") ? (
+                                <div className="markdown-content prose dark:prose-invert max-w-none break-words leading-relaxed text-[15px] md:text-[16px] text-left w-full">
+                                    <ReactMarkdown
+                                        remarkPlugins={[remarkGfm]}
+                                        components={{
+                                            code({ inline, className, children, ...props }: any) {
+                                                const match = /language-(\w+)/.exec(className || "");
+                                                return !inline && match ? (
+                                                    <CodeBlock
+                                                        language={match[1]}
+                                                        value={String(children).replace(/\n$/, "")}
+                                                        {...props}
+                                                    />
+                                                ) : (
+                                                    <code className={className} {...props}>
+                                                        {children}
+                                                    </code>
+                                                );
+                                            }
+                                        }}
+                                    >
+                                        {typeof m.content === "string"
+                                            ? m.content
+                                            : (Array.isArray(m.content) as any)
+                                                ? (m.content as any[]).find((part: any) => part.type === "text")?.text || ""
+                                                : ""}
+                                    </ReactMarkdown>
+                                </div>
+                            ) : null}
+
+                            {/* Transcription text after media */}
+                            {m.mediaType === "transcription" && m.content && (
+                                <div className="markdown-content prose dark:prose-invert max-w-none break-words leading-relaxed text-[15px] md:text-[16px] text-left w-full">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {typeof m.content === "string" ? m.content : ""}
+                                    </ReactMarkdown>
+                                </div>
+                            )}
+
+                            {/* Text content for assistant on text models with no media */}
+                            {m.role === "assistant" && !m.mediaUrl && m.mediaType !== "transcription" && typeof m.content === "string" && m.content && (
+                                <div className="markdown-content prose dark:prose-invert max-w-none break-words leading-relaxed text-[15px] md:text-[16px] text-left w-full">
+                                    <ReactMarkdown
+                                        remarkPlugins={[remarkGfm]}
+                                        components={{
+                                            code({ inline, className, children, ...props }: any) {
+                                                const match = /language-(\w+)/.exec(className || "");
+                                                return !inline && match ? (
+                                                    <CodeBlock
+                                                        language={match[1]}
+                                                        value={String(children).replace(/\n$/, "")}
+                                                        {...props}
+                                                    />
+                                                ) : (
+                                                    <code className={className} {...props}>
+                                                        {children}
+                                                    </code>
+                                                );
+                                            }
+                                        }}
+                                    >
+                                        {m.content}
+                                    </ReactMarkdown>
+                                </div>
+                            )}
+
+                            {/* File attachments */}
                             {m.files && m.files.length > 0 && (
                                 <div className={`flex flex-wrap gap-2 mt-4 pt-4 border-t border-black/5 dark:border-white/5 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                                     {m.files.map((f, i) => (
@@ -162,6 +285,9 @@ export const ChatWindow = React.memo(function ChatWindow({
                         <div className="w-5 h-5 border-2 border-claude-accent/30 border-t-claude-accent rounded-full animate-spin" />
                     </div>
                     <div className="flex-1 max-w-sm mt-3 space-y-3">
+                        {loadingStatus && (
+                            <p className="text-xs text-gray-400 font-medium animate-pulse">{loadingStatus}</p>
+                        )}
                         <div className="h-2 bg-gray-100 dark:bg-white/5 rounded-full w-1/3 animate-pulse" />
                         <div className="h-2 bg-gray-100 dark:bg-white/5 rounded-full w-full animate-pulse delay-75" />
                         <div className="h-2 bg-gray-100 dark:bg-white/5 rounded-full w-4/5 animate-pulse delay-150" />

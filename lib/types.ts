@@ -5,6 +5,9 @@ export type Message = {
     reasoning?: string;
     modelId?: string;
     files?: { name: string; type: string; url?: string }[];
+    // Media generation fields
+    mediaUrl?: string;
+    mediaType?: "image" | "video" | "audio" | "transcription";
 };
 
 export type Chat = {

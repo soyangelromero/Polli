@@ -7,7 +7,7 @@ import React from "react";
 
 // Types & Constants
 import { Message, Chat } from "../lib/types";
-import { MODELS, TRANSLATIONS } from "../lib/constants";
+import { MODELS, TRANSLATIONS, TEXT_MODELS, IMAGE_MODELS, VIDEO_MODELS, AUDIO_MODELS } from "../lib/constants";
 
 // Components
 import { ChatSidebar } from "../components/ChatSidebar";
@@ -15,6 +15,20 @@ import { ChatWindow } from "../components/ChatWindow";
 import { ChatInput } from "../components/ChatInput";
 import { ModelSelector } from "../components/ModelSelector";
 import { ApiKeyModal } from "../components/ApiKeyModal";
+
+// Model category helpers (client-side)
+const IMAGE_MODEL_IDS = IMAGE_MODELS.map(m => m.id);
+const VIDEO_MODEL_IDS = VIDEO_MODELS.map(m => m.id);
+const AUDIO_TTS_IDS = ["elevenlabs", "elevenmusic"];
+const AUDIO_TRANSCRIPTION_IDS = ["scribe", "whisper"];
+
+function getModelCategory(modelId: string): "text" | "image" | "video" | "audio-tts" | "audio-transcription" {
+    if (IMAGE_MODEL_IDS.includes(modelId)) return "image";
+    if (VIDEO_MODEL_IDS.includes(modelId)) return "video";
+    if (AUDIO_TTS_IDS.includes(modelId)) return "audio-tts";
+    if (AUDIO_TRANSCRIPTION_IDS.includes(modelId)) return "audio-transcription";
+    return "text";
+}
 
 export default function ChatPage() {
     const [chats, setChats] = useState<Chat[]>([]);
@@ -71,7 +85,6 @@ export default function ChatPage() {
         if (savedChats) {
             try {
                 const parsed: Chat[] = JSON.parse(savedChats);
-                // Migration: Ensure all old assistant messages have a fixed modelId
                 const migrated = parsed.map(chat => ({
                     ...chat,
                     messages: chat.messages.map(m =>
@@ -90,7 +103,7 @@ export default function ChatPage() {
 
     // Save chats to LocalStorage listener
     useEffect(() => {
-        if (chats.length >= 0) { // Always save, even if empty
+        if (chats.length >= 0) {
             localStorage.setItem("polli_chats", JSON.stringify(chats));
         }
     }, [chats]);
@@ -99,11 +112,11 @@ export default function ChatPage() {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
-    }, [currentChatId, chats, showReasoning]); // Also scroll when reasoning toggles
+    }, [currentChatId, chats, showReasoning]);
 
     const currentChat = useMemo(() => chats.find(c => c.id === currentChatId), [chats, currentChatId]);
     const messages = useMemo(() => currentChat?.messages || [], [currentChat]);
-    const selectedModelId = currentChat?.model || "claude-large";
+    const selectedModelId = currentChat?.model || "openai";
     const selectedModel = useMemo(() => MODELS.find(m => m.id === selectedModelId) || MODELS[0], [selectedModelId]);
     const t = useMemo(() => TRANSLATIONS[language], [language]);
 
@@ -111,7 +124,7 @@ export default function ChatPage() {
         const newChat: Chat = {
             id: Date.now().toString(),
             title: t.newChat,
-            model: "claude-large",
+            model: "openai",
             messages: [],
             createdAt: Date.now(),
         };
@@ -151,13 +164,12 @@ export default function ChatPage() {
 
     const processFiles = useCallback((files: FileList | File[]) => {
         Array.from(files).forEach((file) => {
-            // Check file size (Security Issue #4)
             if (file.size > 5 * 1024 * 1024) {
                 alert(`File ${file.name} is too large. Max 5MB.`);
                 return;
             }
 
-            const type = file.type.startsWith("image/") ? "image" : "file";
+            const type = file.type.startsWith("image/") ? "image" : file.type.startsWith("audio/") ? "audio" : "file";
             const reader = new FileReader();
             reader.onload = (prev) => {
                 setAttachedFiles((prevFiles) => [
@@ -169,7 +181,7 @@ export default function ChatPage() {
         });
     }, []);
 
-    // Global drag handlers to prevent browser from opening files and handle drops
+    // Global drag handlers
     useEffect(() => {
         const handleGlobalDragOver = (e: DragEvent) => {
             e.preventDefault();
@@ -238,6 +250,7 @@ export default function ChatPage() {
         }
     }, []);
 
+    // ─── UNIFIED SEND HANDLER ───
     const handleSend = async (text: string) => {
         if (!text.trim() && attachedFiles.length === 0) return;
 
@@ -267,10 +280,7 @@ export default function ChatPage() {
         };
 
         const chatIndex = updatedChats.findIndex(c => c.id === chatId);
-        if (chatIndex === -1) {
-            console.error("Chat not found");
-            return;
-        }
+        if (chatIndex === -1) { console.error("Chat not found"); return; }
 
         if (updatedChats[chatIndex].messages.length === 0) {
             updatedChats[chatIndex].title = text.slice(0, 40) || "Nuevo Chat";
@@ -283,7 +293,18 @@ export default function ChatPage() {
         setAttachedFiles([]);
         setIsLoading(true);
 
-        if (selectedModelId !== "claude-large" && currentFiles.some(f => f.type === "file")) {
+        const category = getModelCategory(chatModel);
+
+        // Set loading status based on category
+        if (category === "image") {
+            setLoadingStatus(language === "es" ? "Generando imagen..." : "Generating image...");
+        } else if (category === "video") {
+            setLoadingStatus(language === "es" ? "Generando video... esto puede tardar" : "Generating video... this may take a moment");
+        } else if (category === "audio-tts") {
+            setLoadingStatus(language === "es" ? "Generando audio..." : "Generating audio...");
+        } else if (category === "audio-transcription") {
+            setLoadingStatus(language === "es" ? "Transcribiendo audio..." : "Transcribing audio...");
+        } else if (chatModel !== "claude-large" && currentFiles.some(f => f.type === "file")) {
             setLoadingStatus(t.loadingPdf);
         } else {
             setLoadingStatus("");
@@ -293,78 +314,142 @@ export default function ChatPage() {
         abortControllerRef.current = controller;
 
         try {
-            const preparedFiles = await Promise.all(
-                currentFiles.map(async (f) => {
-                    if (f.type === "image" && f.preview) {
-                        return { type: "image", name: f.file.name, url: f.preview };
-                    } else {
-                        return new Promise((resolve) => {
-                            const reader = new FileReader();
-                            reader.onload = () => resolve({
-                                type: "file",
-                                name: f.file.name,
-                                data: (reader.result as string).split(",")[1]
-                            });
-                            reader.readAsDataURL(f.file);
+            // ─── NON-TEXT MODELS: Image, Video, Audio ───
+            if (category !== "text") {
+                let apiBody: any = { prompt: text, model: chatModel };
+
+                // For audio transcription, include audio data from attached files
+                if (category === "audio-transcription" && currentFiles.length > 0) {
+                    const audioFile = currentFiles.find(f => f.file.type.startsWith("audio/"));
+                    if (audioFile) {
+                        const reader = new FileReader();
+                        const audioData = await new Promise<string>((resolve) => {
+                            reader.onload = () => resolve((reader.result as string).split(",")[1]);
+                            reader.readAsDataURL(audioFile.file);
                         });
+                        apiBody.audioData = audioData;
+                        apiBody.audioFileName = audioFile.file.name;
                     }
-                })
-            );
-
-            const response = await fetch("/api/chat", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-api-key": userApiKey || ""
-                },
-                signal: controller.signal,
-                body: JSON.stringify({
-                    chatId: chatId,
-                    chatTitle: userMsgTitle,
-                    model: chatModel,
-                    messages: updatedChats[chatIndex].messages.map(m => ({ role: m.role, content: m.content })),
-                    files: preparedFiles
-                }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                // Handle errors (display as assistant message or alert)
-                const rawError = data.error || data.info || "Error de conexión";
-                const errorMsg = typeof rawError === "string" ? rawError : JSON.stringify(rawError);
-                // Optionally push an error message to chat
-                const errorSystemMsg: Message = {
-                    id: (Date.now() + 1).toString(),
-                    role: "assistant",
-                    content: `Error: ${errorMsg}`,
-                    modelId: chatModel
-                };
-                const finalChats = [...updatedChats];
-                const finalChatIndex = finalChats.findIndex(c => c.id === chatId);
-                if (finalChatIndex !== -1) {
-                    finalChats[finalChatIndex].messages.push(errorSystemMsg);
-                    setChats(finalChats);
                 }
-            } else {
-                const aiMsg: Message = {
-                    id: (Date.now() + 1).toString(),
-                    role: "assistant",
-                    content: data.content || "Lo siento, hubo un error.",
-                    reasoning: data.reasoning || undefined,
-                    modelId: chatModel
-                };
 
-                const finalChats = [...updatedChats];
-                const finalChatIndex = finalChats.findIndex(c => c.id === chatId);
-                if (finalChatIndex !== -1) {
-                    finalChats[finalChatIndex].messages.push(aiMsg);
-                    setChats(finalChats);
+                const response = await fetch("/api/generate", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-api-key": userApiKey || ""
+                    },
+                    signal: controller.signal,
+                    body: JSON.stringify(apiBody),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    const rawError = data.error || "Error generating content";
+                    const errorMsg = typeof rawError === "string" ? rawError : JSON.stringify(rawError);
+                    const errorSystemMsg: Message = {
+                        id: (Date.now() + 1).toString(),
+                        role: "assistant",
+                        content: `Error: ${errorMsg}`,
+                        modelId: chatModel
+                    };
+                    const finalChats = [...updatedChats];
+                    const finalChatIndex = finalChats.findIndex(c => c.id === chatId);
+                    if (finalChatIndex !== -1) {
+                        finalChats[finalChatIndex].messages.push(errorSystemMsg);
+                        setChats(finalChats);
+                    }
+                } else {
+                    const aiMsg: Message = {
+                        id: (Date.now() + 1).toString(),
+                        role: "assistant",
+                        content: data.content || text,
+                        modelId: chatModel,
+                        mediaUrl: data.mediaUrl,
+                        mediaType: data.mediaType,
+                    };
+                    const finalChats = [...updatedChats];
+                    const finalChatIndex = finalChats.findIndex(c => c.id === chatId);
+                    if (finalChatIndex !== -1) {
+                        finalChats[finalChatIndex].messages.push(aiMsg);
+                        setChats(finalChats);
+                    }
+                }
+            }
+            // ─── TEXT MODELS ───
+            else {
+                const preparedFiles = await Promise.all(
+                    currentFiles.map(async (f) => {
+                        if (f.type === "image" && f.preview) {
+                            return { type: "image", name: f.file.name, url: f.preview };
+                        } else {
+                            return new Promise((resolve) => {
+                                const reader = new FileReader();
+                                reader.onload = () => resolve({
+                                    type: "file",
+                                    name: f.file.name,
+                                    data: (reader.result as string).split(",")[1]
+                                });
+                                reader.readAsDataURL(f.file);
+                            });
+                        }
+                    })
+                );
+
+                const response = await fetch("/api/chat", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-api-key": userApiKey || ""
+                    },
+                    signal: controller.signal,
+                    body: JSON.stringify({
+                        chatId: chatId,
+                        chatTitle: userMsgTitle,
+                        model: chatModel,
+                        messages: updatedChats[chatIndex].messages.map(m => ({ role: m.role, content: m.content })),
+                        files: preparedFiles
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    const rawError = data.error || data.info || "Error de conexión";
+                    const errorMsg = typeof rawError === "string" ? rawError : JSON.stringify(rawError);
+                    const errorSystemMsg: Message = {
+                        id: (Date.now() + 1).toString(),
+                        role: "assistant",
+                        content: `Error: ${errorMsg}`,
+                        modelId: chatModel
+                    };
+                    const finalChats = [...updatedChats];
+                    const finalChatIndex = finalChats.findIndex(c => c.id === chatId);
+                    if (finalChatIndex !== -1) {
+                        finalChats[finalChatIndex].messages.push(errorSystemMsg);
+                        setChats(finalChats);
+                    }
+                } else {
+                    const aiMsg: Message = {
+                        id: (Date.now() + 1).toString(),
+                        role: "assistant",
+                        content: data.content || "Lo siento, hubo un error.",
+                        reasoning: data.reasoning || undefined,
+                        modelId: chatModel
+                    };
+
+                    const finalChats = [...updatedChats];
+                    const finalChatIndex = finalChats.findIndex(c => c.id === chatId);
+                    if (finalChatIndex !== -1) {
+                        finalChats[finalChatIndex].messages.push(aiMsg);
+                        setChats(finalChats);
+                    }
                 }
             }
 
             setIsLoading(false);
 
+            // Refresh balance
             try {
                 const balRes = await fetch("/api/balance", {
                     headers: { "x-api-key": userApiKey || "" }
@@ -374,7 +459,7 @@ export default function ChatPage() {
                     setPollenBalance(balData.balance);
                 }
             } catch (e) {
-                console.error("Error updated balance:", e);
+                console.error("Error updating balance:", e);
             }
         } catch (error: any) {
             if (error.name === "AbortError") {
@@ -451,6 +536,7 @@ export default function ChatPage() {
                             setIsModelMenuOpen={setIsModelMenuOpen}
                             changeModel={changeModel}
                             t={t}
+                            language={language}
                         />
                     </div>
 
@@ -495,6 +581,7 @@ export default function ChatPage() {
                         selectedModel={selectedModel}
                         t={t}
                         isLoading={isLoading}
+                        loadingStatus={loadingStatus}
                         showReasoning={showReasoning}
                         toggleReasoning={toggleReasoning}
                         language={language}
@@ -502,7 +589,6 @@ export default function ChatPage() {
                 </div>
 
                 <ChatInput
-                    // The component now handles its own input state
                     onSend={handleSend}
                     handleStop={handleStop}
                     isLoading={isLoading}
