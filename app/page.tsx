@@ -35,7 +35,7 @@ export default function ChatPage() {
     const [currentChatId, setCurrentChatId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [loadingStatus, setLoadingStatus] = useState("");
-    const [balanceData, setBalanceData] = useState<{ balance: number; tier: string; dailyPollen: number } | null>(null);
+    const [balanceData, setBalanceData] = useState<{ balance: number; tier: string; dailyPollen: number; credits?: number } | null>(null);
     const [isRefreshingBalance, setIsRefreshingBalance] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState<{ file: File; type: string; preview?: string }[]>([]);
     const [showReasoning, setShowReasoning] = useState<Record<string, boolean>>({});
@@ -556,12 +556,21 @@ export default function ChatPage() {
                         {/* Credits Balance (Total) */}
                         <div className="flex flex-col items-end">
                             <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-0.5">{t.credits}</span>
-                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 shadow-sm group/balance transition-all hover:bg-orange-100 dark:hover:bg-orange-500/20">
-                                <span className="text-[11px] md:text-xs font-black text-orange-600 dark:text-orange-400">
-                                    {balanceData ? (balanceData.credits || balanceData.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "---"}
+                            {/* Pollen Balance */}
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 shadow-sm group/balance transition-all hover:bg-orange-100 dark:hover:bg-orange-500/20" title={t[language].pollenBalance}>
+                                <span className="text-[11px] md:text-xs font-black text-orange-600 dark:text-orange-400 flex items-center gap-1">
+                                    🌸 {balanceData ? balanceData.balance.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : "---"}
                                 </span>
-                                <Sparkles size={11} className="text-orange-500 animate-pulse hidden xs:block" />
                             </div>
+
+                            {/* Paid Credits */}
+                            {(balanceData?.credits !== undefined && balanceData.credits > 0) && (
+                                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-50 dark:bg-purple-500/10 border border-purple-100 dark:border-purple-500/20 shadow-sm group/balance transition-all hover:bg-purple-100 dark:hover:bg-purple-500/20" title={t[language].credits}>
+                                    <span className="text-[11px] md:text-xs font-black text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                                        💎 {balanceData.credits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </span>
+                                </div>
+                            )}
                         </div>
 
                         <button
