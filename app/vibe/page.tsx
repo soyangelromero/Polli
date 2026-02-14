@@ -33,9 +33,21 @@ export default function VibePage() {
     const [activeCode, setActiveCode] = useState("");
     const [activeLang, setActiveLang] = useState("");
 
+    const [language, setLanguage] = useState<'en' | 'es'>('es');
+    const [balanceData, setBalanceData] = useState<{ balance: number; tier: string; dailyPollen: number; credits?: number } | null>(null);
+    const [isRefreshingBalance, setIsRefreshingBalance] = useState(false);
+
     const scrollRef = useRef<HTMLDivElement>(null);
 
-    // Filter coder-specific models
+    // Initial language load
+    useEffect(() => {
+        const savedLang = localStorage.getItem("preferred_language") as 'en' | 'es';
+        if (savedLang) setLanguage(savedLang);
+    }, []);
+
+    const t = useMemo(() => TRANSLATIONS[language], [language]);
+
+    // Model Selection logic
     const coderModels = useMemo(() => MODELS.filter(m =>
         m.id.includes("coder") ||
         m.id.includes("deepseek") ||
@@ -49,9 +61,26 @@ export default function VibePage() {
     const currentChat = useMemo(() => chats.find(c => c.id === currentChatId), [chats, currentChatId]);
     const messages = useMemo(() => currentChat?.messages || [], [currentChat]);
 
-    const [balanceData, setBalanceData] = useState<any>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const fetchBalance = useCallback(async () => {
+        if (!userApiKey) return;
+        setIsRefreshingBalance(true);
+        try {
+            const res = await fetch("/api/balance", {
+                headers: { "x-api-key": userApiKey }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setBalanceData(data);
+            }
+        } catch (e) {
+            console.error("Error fetching balance:", e);
+        } finally {
+            setIsRefreshingBalance(false);
+        }
+    }, [userApiKey]);
 
     // Save chats to localStorage on change
     useEffect(() => {
@@ -65,13 +94,13 @@ export default function VibePage() {
         const savedKey = localStorage.getItem("pollinations_api_key");
         const savedChats = localStorage.getItem("polli_chats");
 
-        if (savedKey) setUserApiKey(savedKey);
+        if (savedKey) {
+            setUserApiKey(savedKey);
+        }
         if (savedChats) {
             try {
                 const parsed = JSON.parse(savedChats);
                 setChats(parsed);
-                // In Vibe mode, we usually want to focus on a "Vibe Session"
-                // Let's find one or create a specific one
                 const vibeSession = parsed.find((c: any) => c.title === "Vibe Session");
                 if (vibeSession) {
                     setCurrentChatId(vibeSession.id);
@@ -94,11 +123,17 @@ export default function VibePage() {
         setIsMounted(true);
     }, []);
 
+    // Fetch balance once API key is ready
+    useEffect(() => {
+        if (userApiKey && isMounted) {
+            fetchBalance();
+        }
+    }, [userApiKey, isMounted, fetchBalance]);
+
     // Extract code from messages
     useEffect(() => {
         const lastAssistantMsg = [...messages].reverse().find(m => m.role === "assistant");
         if (lastAssistantMsg && typeof lastAssistantMsg.content === "string") {
-            // Match any code block, taking the last one as the "active" canvas
             const codeBlocks = lastAssistantMsg.content.match(/```(\w+)?\n([\s\S]*?)```/g);
             if (codeBlocks) {
                 const lastBlock = codeBlocks[codeBlocks.length - 1];
@@ -245,7 +280,7 @@ export default function VibePage() {
                         className="flex items-center gap-2 text-gray-400 hover:text-white transition-all group px-4 py-2 rounded-xl bg-white/5 border border-white/5 hover:border-white/10 active:scale-95"
                     >
                         <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] pt-0.5">Back to Chat</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] pt-0.5">{language === 'en' ? 'Back' : 'Volver'}</span>
                     </Link>
                     <div className="h-6 w-[1px] bg-white/10" />
                     <div className="flex items-center gap-3">
@@ -253,15 +288,77 @@ export default function VibePage() {
                             <Terminal size={20} className="text-white fill-white/20" />
                         </div>
                         <h1 className="text-xl font-black tracking-tight uppercase flex items-center gap-2">
-                            Vibe Hub <span className="text-[9px] bg-claude-accent/20 text-claude-accent px-2 py-0.5 rounded-full border border-claude-accent/30 tracking-widest font-black">CORE V1.0</span>
+                            {t.vibeHub} <span className="text-[9px] bg-claude-accent/20 text-claude-accent px-2 py-0.5 rounded-full border border-claude-accent/30 tracking-widest font-black uppercase">V1.1</span>
                         </h1>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4">
+                {/* Center: Improved Model Selection */}
+                <div className="flex items-center bg-white/5 border border-white/10 rounded-2xl p-1 gap-1">
+                    {coderModels.map(m => (
+                        <button
+                            key={m.id}
+                            onClick={() => setSelectedModelId(m.id)}
+                            className={`relative px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${selectedModelId === m.id ? 'bg-claude-accent text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
+                        >
+                            <span>{m.name.split(' ')[0]}</span>
+                            {m.paidOnly && (
+                                <span className={`px-1 rounded-[4px] text-[7px] font-black border ${selectedModelId === m.id ? 'bg-white/20 border-white/20 text-white' : 'bg-orange-500/20 border-orange-500/30 text-orange-500'}`}>
+                                    {t.paidTag}
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="flex items-center gap-6">
+                    {/* Balance Display */}
+                    <div className="flex items-center gap-3">
+                        {/* Pollens */}
+                        <div className="flex flex-col items-end">
+                            <span className="text-[7px] font-black text-gray-500 uppercase tracking-widest">{t.pollenBalance}</span>
+                            <span className="text-xs font-black text-orange-500">
+                                {balanceData ? balanceData.balance.toLocaleString() : "---"}
+                            </span>
+                        </div>
+                        {/* Credits */}
+                        {balanceData?.credits !== undefined && balanceData.credits > 0 && (
+                            <div className="flex flex-col items-end border-l border-white/10 pl-3">
+                                <span className="text-[7px] font-black text-gray-500 uppercase tracking-widest">{t.credits}</span>
+                                <span className="text-xs font-black text-blue-400">
+                                    {balanceData.credits.toLocaleString()}
+                                </span>
+                            </div>
+                        )}
+                        <button
+                            onClick={() => fetchBalance()}
+                            disabled={isRefreshingBalance}
+                            className={`p-2 rounded-lg bg-white/5 border border-white/5 hover:border-white/10 transition-all ${isRefreshingBalance ? 'animate-spin opacity-50' : ''}`}
+                            title={t.updateBalance}
+                        >
+                            <RefreshCcw size={14} />
+                        </button>
+                    </div>
+
+                    <div className="h-6 w-[1px] bg-white/10" />
+
+                    {/* Language Switcher */}
                     <button
                         onClick={() => {
-                            if (confirm("Reset current vibe session? All history for this session will be lost.")) {
+                            const newLang = language === 'en' ? 'es' : 'en';
+                            setLanguage(newLang);
+                            localStorage.setItem("preferred_language", newLang);
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/5 hover:border-white/10 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
+                    >
+                        {language === 'en' ? 'ES' : 'EN'}
+                    </button>
+
+                    <div className="h-6 w-[1px] bg-white/10" />
+
+                    <button
+                        onClick={() => {
+                            if (confirm(t.deleteConfirm)) {
                                 const clearedChats = chats.filter(c => c.id !== currentChatId);
                                 setChats(clearedChats);
                                 setCurrentChatId(clearedChats.length > 0 ? clearedChats[0].id : null);
@@ -272,23 +369,8 @@ export default function VibePage() {
                         className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-all text-[10px] font-black uppercase tracking-widest border border-red-500/10 active:scale-95"
                     >
                         <Trash2 size={14} />
-                        Clear Vibe
+                        {language === 'en' ? 'Clear' : 'Limpiar'}
                     </button>
-
-                    <div className="h-4 w-[1px] bg-white/10" />
-
-                    {/* Simplified model switcher specifically for Coder mode */}
-                    <div className="flex items-center bg-white/5 border border-white/10 rounded-2xl p-1 gap-1">
-                        {coderModels.slice(0, 4).map(m => (
-                            <button
-                                key={m.id}
-                                onClick={() => setSelectedModelId(m.id)}
-                                className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${selectedModelId === m.id ? 'bg-claude-accent text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
-                            >
-                                {m.name.split(' ')[0]}
-                            </button>
-                        ))}
-                    </div>
                 </div>
             </header>
 
@@ -305,12 +387,12 @@ export default function VibePage() {
                                     <Sparkles className="text-claude-accent absolute animate-ping opacity-20" size={60} />
                                     <Code2 className="text-claude-accent" size={40} />
                                 </div>
-                                <h3 className="text-2xl font-black uppercase tracking-tighter mb-3">Vibe Interface</h3>
+                                <h3 className="text-2xl font-black uppercase tracking-tighter mb-3">{t.vibeHub}</h3>
                                 <p className="text-sm text-gray-500 font-medium leading-relaxed max-w-[280px]">
-                                    Optimize your workflow. Describe complex features and watch the canvas come alive.
+                                    {t.vibeHubDesc}
                                 </p>
                                 <div className="mt-10 flex flex-wrap justify-center gap-2">
-                                    {["Fast Refactor", "New UI Component", "API Integration"].map(hint => (
+                                    {(language === 'en' ? ["Fast Refactor", "New UI Component", "API Integration"] : ["Refactor Rápido", "Nuevo Componente UI", "Integración API"]).map(hint => (
                                         <button
                                             key={hint}
                                             onClick={() => handleSend(hint)}
@@ -334,13 +416,13 @@ export default function VibePage() {
                                             {m.role === 'user' ? 'U' : 'AI'}
                                         </div>
                                         <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                                            {m.role === 'user' ? 'You' : selectedModel.name}
+                                            {m.role === 'user' ? (language === 'en' ? 'You' : 'Tú') : selectedModel.name}
                                         </span>
                                     </div>
                                     <div className={`p-5 rounded-[2rem] text-[14px] font-medium leading-[1.6] max-w-[95%] shadow-sm ${m.role === 'user' ? 'bg-claude-accent text-white rounded-tr-none' : 'bg-white/5 text-gray-300 border border-white/5 rounded-tl-none'}`}>
                                         {typeof m.content === 'string' ? (
                                             m.content.includes("```")
-                                                ? m.content.split("```")[0] + "... [Code in Canvas]"
+                                                ? m.content.split("```")[0] + `... [${language === 'en' ? 'Code in Canvas' : 'Código en Canvas'}]`
                                                 : m.content
                                         ) : '...'}
                                     </div>
@@ -350,7 +432,7 @@ export default function VibePage() {
                         {isLoading && (
                             <div className="flex gap-3 items-center text-[10px] font-black text-claude-accent uppercase tracking-widest animate-pulse px-2">
                                 <RefreshCcw size={12} className="animate-spin" />
-                                Computing...
+                                {t.generating}
                             </div>
                         )}
                     </div>
@@ -364,7 +446,7 @@ export default function VibePage() {
                             removeFile={() => { }}
                             fileInputRef={fileInputRef}
                             handleFileUpload={() => { }}
-                            t={{ ...TRANSLATIONS.en, placeholder: "Describe your code idea..." }}
+                            t={t}
                             selectedModel={selectedModel}
                             isDragging={false}
                         />
@@ -380,7 +462,7 @@ export default function VibePage() {
             {/* API Key Check */}
             <ApiKeyModal
                 show={!userApiKey}
-                t={TRANSLATIONS.en}
+                t={t}
                 tempKey=""
                 setTempKey={() => { }}
                 onSave={(key) => {
